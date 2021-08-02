@@ -1,0 +1,223 @@
+.config-root {
+    width: 100vw;
+    height: 100vh;
+    color: white;
+    background: rgba(23, 23, 23, 1);
+    position: absolute;
+    overflow-y: auto;
+    display: flex;
+}
+
+.config-pane {
+    width: 50%;
+}
+
+.config-main {
+    display: flex;
+    flex-direction: column;
+    margin: 1em;
+    height: calc(100% - 2em);
+    font-size: 14px;
+}
+
+.config-pane a {
+    color: rgba(0, 120, 215, 1);
+    text-decoration: none;
+}
+
+.config-pane p {
+    font-size: 10.5pt;
+    line-height: 20px;
+    margin: 0;
+}
+
+.config-pane h1 {
+    font-weight: 200;
+    font-size: 46px;
+    line-height: 56px;
+    margin: 0;
+}
+
+.config-pane h4 {
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 28px;
+    margin: 0;
+}
+
+.config-input {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: smooth;
+}
+
+.config-footer {
+    display: flex;
+    flex-direction: column;
+}
+
+.config-example {
+    width: 50%;
+    background-image: url(images/starlight-carnival-1.jpg);
+    background-position: center;
+    background-size: cover;
+}
+
+.config-example>.chat-container {
+    backdrop-filter: blur(64px) saturate(125%);
+}
+
+.config-input-text {
+    padding-bottom: 5px;
+    padding-left: 12px;
+    padding-right: 12px;
+    padding-top: 5px;
+
+    margin-top: 8px;
+
+    border: none;
+    border-bottom: 2px solid transparent;
+    border-radius: 4px;
+    font-size: 14px;
+
+    color: white;
+    background-color: rgb(32, 31, 31);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+        sans-serif;
+}
+
+textarea.config-input-text {
+    resize: none;
+    min-height: 100px;
+    max-height: 300px;
+}
+
+.config-input-text:hover {
+    border-bottom: 2px solid rgba(0, 120, 215, 1);
+}
+
+.config-input-text:focus {
+    outline: none;
+    border-bottom: 2px solid rgba(0, 120, 215, 1);
+}
+
+.chat-frame {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.form-group {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.form-group>* {
+    padding-top: 1em;
+    margin-right: .5em;
+}
+
+.form-label {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+input[type="color"] {
+    -webkit-appearance: none;
+    border: none;
+}
+
+input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+input[type="color"]::-webkit-color-swatch {
+    border: none;
+    border-radius: 4px;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+}
+
+input[type="color"].config-input-text {
+    padding: 0;
+    width: 100%;
+    height: 31px;
+    box-sizing: border-box;
+}
+
+select.config-input-text {
+    padding-bottom: 4px;
+    padding-left: 12px;
+    padding-right: 12px;
+    padding-top: 4px;
+}
+
+.checkbox {
+    display: flex;
+    position: relative;
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    align-items: center;
+    margin-right: 1em;
+}
+
+.checkbox input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+.checkmark {
+    font-family: "Segoe MDL2 Assets";
+    font-size: 18px;
+    height: 18px;
+    width: 18px;
+    margin-right: 8px;
+    border: 1px solid rgb(243, 242, 241);
+    border-radius: 2px;
+    background-color: rgba(31, 31, 31, 1);
+    color: transparent;
+}
+
+.checkbox:hover input~.checkmark {
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    background-color: rgba(43, 43, 43, 1);
+}
+
+.checkbox input:checked~.checkmark {
+    border: 1px solid rgba(0, 120, 215, 1);
+    background-color: rgba(0, 120, 215, 1);
+    color: rgba(255, 255, 255, 1);
+}
+
+.checkbox input:active~.checkmark {
+    border: 1px solid rgba(0, 120, 215, 1);
+    background-color: rgba(0, 90, 158, 1);
+    color: transparent;
+}
+
+.checkmark::after {
+    content: "\E73E";
+}
+
+@media only screen and (max-width: 768px) {
+    .config-pane {
+        width: 100%;
+        height: 100vh;
+        overflow-y: hidden;
+    }
+
+    .config-example {
+        display: none;
+    }
+}
