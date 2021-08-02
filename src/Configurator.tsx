@@ -35,6 +35,7 @@ export class Configurator extends Component<{}, ConfiguratorState> {
         fontColor: "#FFFFFF",
         showBadges: true,
         showPronouns: true,
+        showUserColours: true,
 
         dropShadow: true,
         dropShadowBlur: 1,
@@ -153,6 +154,7 @@ export class Configurator extends Component<{}, ConfiguratorState> {
               <div className="form-group">
                 <Checkbox label="Show badges" value={this.state.config.showBadges} onChange={(e) => this.onValueChange("showBadges", e.target.checked)} />
                 <Checkbox label="Show pronouns" value={this.state.config.showPronouns} onChange={(e) => this.onValueChange("showPronouns", e.target.checked)} />
+                <Checkbox label="Show user colours" value={this.state.config.showUserColours} onChange={(e) => this.onValueChange("showUserColours", e.target.checked)} />
                 <Checkbox label="Hide commands" value={this.state.config.hideCommands} onChange={(e) => this.onValueChange("hideCommands", e.target.checked)} />
                 <Checkbox label="Drop shadow" value={this.state.config.dropShadow} onChange={(e) => this.onValueChange("dropShadow", e.target.checked)} />
                 <Checkbox label="Outline" value={this.state.config.outline} onChange={(e) => this.onValueChange("outline", e.target.checked)} />
@@ -189,7 +191,7 @@ export class Configurator extends Component<{}, ConfiguratorState> {
                         className="config-input-text"
                         size={1}
                         value={this.state.config.dropShadowColour}
-                        onChange={(e) => this.onValueChange("dropShadowColor", e.target.value)} />
+                        onChange={(e) => this.onValueChange("dropShadowColour", e.target.value)} />
                     </label>
                   </div>
                 </>

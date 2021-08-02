@@ -20,7 +20,11 @@ export const Message = (props: MessageProps) => {
   if (config?.hideCommands && message.params[1].startsWith('!')) { return null; }
 
   let nick = message.tags["display-name"] ?? rawNick;
-  let color: string = message.tags.color ?? TwitchDefaultColors[nick.toLowerCase().charCodeAt(0) % 15];
+  let color: string = "inherit";
+
+  if (config?.showUserColours) {
+    color = message.tags.color ?? TwitchDefaultColors[nick.toLowerCase().charCodeAt(0) % 15];
+  }
 
   return (
     <p className="message">

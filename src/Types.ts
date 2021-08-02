@@ -8,6 +8,7 @@ export interface Configuration {
 
   showBadges: boolean
   showPronouns: boolean
+  showUserColours: boolean;
   hideCommands: boolean
 
   dropShadow: boolean
