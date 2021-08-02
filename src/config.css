@@ -8,6 +8,14 @@
     display: flex;
 }
 
+.config-warning {
+    border: 1px solid #ffc107;
+    border-radius: 8px;
+    background-color: #ffc10740;
+    padding: 12px;
+    margin: 0.8em 0 0 0;
+}
+
 .config-pane {
     flex: 1;
 }
@@ -70,6 +78,9 @@
 }
 
 .config-input-text {
+    display: flex;
+    flex: 1;
+
     padding-bottom: 5px;
     padding-left: 12px;
     padding-right: 12px;
@@ -111,19 +122,29 @@ textarea.config-input-text {
 }
 
 .form-group {
+    margin-top: .8em;
     display: flex;
     flex-wrap: wrap;
 }
 
 .form-group>* {
-    padding-top: 1em;
-    margin-right: .5em;
+    margin-top: .2em;
+    margin-left: .25em;
+    margin-right: .25em;
+}
+
+.form-group-label {
+    margin-left: .33em;
+    margin-right: .33em;
+    margin-top: .8em;
+    margin-bottom: -.6em;
 }
 
 .form-label {
     display: flex;
     flex-direction: column;
     flex: 1;
+    justify-content: flex-end;
 }
 
 input[type="color"] {
@@ -144,8 +165,8 @@ input[type="color"]::-webkit-color-swatch {
 }
 
 input[type="color"].config-input-text {
-    padding: 0;
     width: 100%;
+    padding: 0;
     height: 31px;
     box-sizing: border-box;
 }
@@ -166,6 +187,7 @@ select.config-input-text {
     -ms-user-select: none;
     user-select: none;
     align-items: center;
+    margin-top: 0.5rem;
     margin-right: 1em;
 }
 

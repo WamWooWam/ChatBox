@@ -3,7 +3,6 @@ import { parse, IRCMessage } from "irc-message-ts";
 import { Message } from "./Message"
 import { BTTVEmote, BTTVUser, Configuration } from "./Types"
 import { fetchJSON, fetchTwitch } from "./Utils"
-import ErrorImage from "./images/error.svg"
 import './Chat.css';
 
 interface ChatState {
@@ -50,7 +49,7 @@ export class Chat extends Component<Configuration, ChatState> {
   }
 
   async componentDidUpdate(previousProps) {
-    if (this.props.channelName != previousProps.channelName) {
+    if (this.props.channelName !== previousProps.channelName) {
       await this.load();
     }
   }
@@ -204,7 +203,7 @@ export class Chat extends Component<Configuration, ChatState> {
         //   this.setState({ messages: [] });
         //   continue;
         case "privmsg":
-          this.setState(oldState => ({ messages: [...(oldState.messages.length == 50 ? oldState.messages.slice(1, 50) : oldState.messages), ircMessage] }));
+          this.setState(oldState => ({ messages: [...(oldState.messages.length >= 50 ? oldState.messages.slice(1, 50) : oldState.messages), ircMessage] }));
           continue;
       }
     }

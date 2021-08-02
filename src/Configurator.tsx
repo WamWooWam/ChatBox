@@ -74,81 +74,74 @@ export class Configurator extends Component<{}, ConfiguratorState> {
       <div className="config-root">
         <div className="config-pane">
           <div className="config-main">
-            <h1>Wam's Chat Thing</h1>
-
             <form onSubmit={this.onSubmit.bind(this)} className="config-input">
-              <h4>A simple, easy to use chat box that supports <a href="http://betterttv.net/">BetterTTV</a>,&nbsp;
+              <h1>Wam's Chat Thing</h1>
+
+              <h4>A simple, easy to use chat box that supports <a href="https://betterttv.net/">BetterTTV</a>,&nbsp;
                 <a href="https://frankerfacez.com/">FrankerFaceZ</a> and&nbsp;
                 <a href="https://7tv.app/">7tv</a> emotes!</h4>
 
-              <div className="form-group">
-                <label className="form-label">
-                  Channel Name
-                  <input type="text"
-                    className="config-input-text"
-                    placeholder="wamwoowam"
-                    value={this.state.config.channelName}
-                    onChange={this.onChannelNameChange.bind(this)}
-                    onBlur={this.updateChat.bind(this)} />
-                </label>
+              <div className="config-warning">
+                <p>This chat box is not yet finished, and links may break in future! Please don't use it in your layouts yet.</p>
               </div>
 
+              <label className="form-group-label">
+                Channel Name
+              </label>
               <div className="form-group">
-                <label className="form-label" style={{ flex: 3 }}>
-                  Font
-                  <input type="text"
-                    className="config-input-text"
-                    placeholder="Font Name"
-                    size={1}
-                    value={this.state.config.fontName}
-                    onChange={(e) => this.onValueChange("fontName", e.target.value)} />
-                </label>
-
-                <label className="form-label">
-                  &nbsp;
-                  <input type="text"
-                    className="config-input-text"
-                    placeholder="Font Size"
-                    size={1}
-                    value={this.state.config.fontSize}
-                    onChange={(e) => this.onValueChange("fontSize", isNaN(+e.target.value) ? this.state.config.fontSize : +e.target.value)} />
-                </label>
-
-                <label className="form-label">
-                  &nbsp;
-                  <select className="config-input-text"
-                    value={this.state.config.fontWeight}
-                    onChange={(e) => this.onValueChange("fontWeight", +e.target.value)}>
-                    <option value="100">Thin</option>
-                    <option value="200">Light</option>
-                    <option value="300">Semilight</option>
-                    <option value="400">Regular</option>
-                    <option value="500">Semibold</option>
-                    <option value="600">Bold</option>
-                    <option value="700">Extra Bold</option>
-                    <option value="800">Black</option>
-                    <option value="900">Ultra Black</option>
-                  </select>
-                </label>
-
-
-                <label className="form-label">
-                  &nbsp;
-                  <input type="color"
-                    className="config-input-text"
-                    size={1}
-                    value={this.state.config.fontColor}
-                    onChange={(e) => this.onValueChange("fontColor", e.target.value)} />
-                </label>
+                <input type="text"
+                  className="config-input-text"
+                  placeholder="wamwoowam"
+                  value={this.state.config.channelName}
+                  onChange={this.onChannelNameChange.bind(this)}
+                  onBlur={this.updateChat.bind(this)} />
               </div>
 
+              <label className="form-group-label">Font</label>
               <div className="form-group">
-                <label className="form-label">
-                  Blocked users (one per line)
-                  <textarea className="config-input-text"
-                    value={this.state.config.blockedUsers.join('\n')}
-                    onChange={(e) => this.onValueChange("blockedUsers", e.target.value.split('\n'))} />
-                </label>
+                <input type="text"
+                  className="config-input-text"
+                  placeholder="Font Name"
+                  size={1}
+                  style={{ flex: 3 }}
+                  value={this.state.config.fontName}
+                  onChange={(e) => this.onValueChange("fontName", e.target.value)} />
+
+                <input type="text"
+                  className="config-input-text"
+                  placeholder="Font Size"
+                  size={1}
+                  value={this.state.config.fontSize}
+                  onChange={(e) => this.onValueChange("fontSize", isNaN(+e.target.value) ? this.state.config.fontSize : +e.target.value)} />
+
+                <select className="config-input-text"
+                  value={this.state.config.fontWeight}
+                  onChange={(e) => this.onValueChange("fontWeight", +e.target.value)}>
+                  <option value="100">Thin</option>
+                  <option value="200">Light</option>
+                  <option value="300">Semilight</option>
+                  <option value="400">Regular</option>
+                  <option value="500">Semibold</option>
+                  <option value="600">Bold</option>
+                  <option value="700">Extra Bold</option>
+                  <option value="800">Black</option>
+                  <option value="900">Ultra Black</option>
+                </select>
+
+                <input type="color"
+                  className="config-input-text"
+                  size={1}
+                  value={this.state.config.fontColor}
+                  onChange={(e) => this.onValueChange("fontColor", e.target.value)} />
+              </div>
+
+              <label className="form-group-label">
+                Blocked users (one per line)
+              </label>
+              <div className="form-group">
+                <textarea className="config-input-text"
+                  value={this.state.config.blockedUsers.join('\n')}
+                  onChange={(e) => this.onValueChange("blockedUsers", e.target.value.split('\n'))} />
               </div>
 
               <div className="form-group">
@@ -162,7 +155,7 @@ export class Configurator extends Component<{}, ConfiguratorState> {
 
               {this.state.config.dropShadow ? (
                 <>
-                  <h4 style={{ marginTop: "1em", marginBottom: "-0.5em" }}>Shadow Options</h4>
+                  <h4 style={{ margin: "1em 0.2em -0.5em 0.2em" }}>Shadow Options</h4>
 
                   <div className="form-group">
                     <label className="form-label">
@@ -200,7 +193,7 @@ export class Configurator extends Component<{}, ConfiguratorState> {
 
               {this.state.config.outline ? (
                 <>
-                  <h4 style={{ marginTop: "1em", marginBottom: "-0.5em" }}>Outline Options</h4>
+                  <h4 style={{ margin: "1em 0.2em -0.5em 0.2em" }}>Outline Options</h4>
 
                   <div className="form-group">
                     <label className="form-label">
