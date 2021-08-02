@@ -9,7 +9,7 @@
 }
 
 .config-pane {
-    width: 50%;
+    flex: 1;
 }
 
 .config-main {
@@ -59,7 +59,7 @@
 }
 
 .config-example {
-    width: 50%;
+    flex: 2;
     background-image: url(images/starlight-carnival-1.jpg);
     background-position: center;
     background-size: cover;
@@ -210,10 +210,14 @@ select.config-input-text {
     content: "\E73E";
 }
 
+@media only screen and (max-width: 1120px) {
+    .config-example {
+        flex: 1;
+    }
+}
+
 @media only screen and (max-width: 768px) {
     .config-pane {
-        width: 100%;
-        height: 100vh;
         overflow-y: hidden;
     }
 
