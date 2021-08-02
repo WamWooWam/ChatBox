@@ -226,7 +226,7 @@ export class Configurator extends Component<{}, ConfiguratorState> {
 
             <div className="config-footer">
               <p>Paste this into a browser source!</p>
-              <input className="config-input-text" readOnly={true} value={`${window.location.href}chat#${btoa(String.fromCharCode(...MsgPack.encode(this.state.config)))}`} />
+              <input className="config-input-text" readOnly={true} value={`${window.location.href}#${btoa(String.fromCharCode(...MsgPack.encode(this.state.config)))}`} />
             </div>
           </div>
         </div>
