@@ -1,5 +1,3 @@
-'use strict';
-
 export function hue2rgb(p, q, t) {
 	if ( t < 0 ) t += 1;
 	if ( t > 1 ) t -= 1;
@@ -568,12 +566,12 @@ export class ColorAdjuster {
 
 
 	rebuildContrast() {
-		this._cache = new Map;
+		this._cache = new Map();
 
 		const base = RGBAColor.fromCSS(this._base),
 			lum = base.luminance();
 
-		const dark = this._dark = lum < 0.5;
+		const dark = this._dark = lum < 0.33;
 
 		if ( dark ) {
 			this._luv = new XYZAColor(

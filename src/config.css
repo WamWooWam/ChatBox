@@ -1,19 +1,34 @@
 .config-root {
     width: 100vw;
     height: 100vh;
-    color: white;
-    background: rgba(23, 23, 23, 1);
+    color: var(--text-fill-color-primary-brush);
+    background: var(--solid-background-fill-color-base-brush);
     position: absolute;
     overflow-y: auto;
     display: flex;
+    transition: background ease-out 0.1s, color ease-out 0.1s;
 }
 
 .config-warning {
-    border: 1px solid #ffc107;
+    border: 1px solid var(--system-fill-color-caution-brush);
     border-radius: 8px;
-    background-color: #ffc10740;
-    padding: 12px;
+    background-color: var(--system-fill-color-caution-background-brush);
+    padding: 8px 12px;
     margin: 0.8em 0 0 0;
+    transition: background ease-out 0.1s, border ease-out 0.1s;
+}
+
+.config-error {
+    border: 1px solid var(--system-fill-color-critical-brush);
+    border-radius: 8px;
+    background-color: var(--system-fill-color-critical-background-brush);
+    padding: 8px 12px;
+    margin: 0.8em 0 0 0;
+    transition: background ease-out 0.1s, border ease-out 0.1s;
+}
+
+.config-pane .config-error a {
+    color: var(--system-fill-color-critical-brush);
 }
 
 .config-pane {
@@ -23,13 +38,13 @@
 .config-main {
     display: flex;
     flex-direction: column;
-    margin: 1em;
-    height: calc(100% - 2em);
+    height: 100%;
     font-size: 14px;
 }
 
-.config-pane a {
-    color: rgba(0, 120, 215, 1);
+a {
+    color: var(--accent-text-fill-color-primary-brush);
+    transition: color ease-out 0.1s;
     text-decoration: none;
 }
 
@@ -57,6 +72,7 @@
     flex: 1;
     display: flex;
     flex-direction: column;
+    padding: 1em;
     overflow-y: auto;
     -webkit-overflow-scrolling: smooth;
 }
@@ -64,6 +80,9 @@
 .config-footer {
     display: flex;
     flex-direction: column;
+    padding: 1em;
+    background: var(--subtle-fill-color-secondary-brush);
+    border-top: 1px solid var(--divider-stroke-color-default-brush);
 }
 
 .config-example {
@@ -74,30 +93,37 @@
 }
 
 .config-example>.chat-container {
+    -webkit-backdrop-filter: blur(64px) saturate(125%);
     backdrop-filter: blur(64px) saturate(125%);
 }
+
 
 .config-input-text {
     display: flex;
     flex: 1;
+
+    margin-top: 8px;
 
     padding-bottom: 5px;
     padding-left: 12px;
     padding-right: 12px;
     padding-top: 5px;
 
-    margin-top: 8px;
-
     border: none;
-    border-bottom: 2px solid transparent;
+    border-bottom: 2px solid var(--subtle-fill-color-secondary-brush);
     border-radius: 4px;
     font-size: 14px;
 
-    color: white;
-    background-color: rgb(32, 31, 31);
+    transition: background ease-out 0.1s, border ease-out 0.1s, border-color 0.1s ease-out;
+
+    color: var(--system-base-high-color);
+    background-color: var(--control-fill-color-default-brush);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
         'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
         sans-serif;
+
+    box-shadow: 0 1.2px 2.4px 0 rgba(0, 0, 0, 0.132), 0 0.6px 1.2px 0 rgba(0, 0, 0, 0.108);
+    font-family: inherit;
 }
 
 textarea.config-input-text {
@@ -107,12 +133,14 @@ textarea.config-input-text {
 }
 
 .config-input-text:hover {
-    border-bottom: 2px solid rgba(0, 120, 215, 1);
+    background-color: var(--control-fill-color-secondary-brush);
+    border-bottom: 2px solid var(--accent-fill-color-default-brush);
 }
 
 .config-input-text:focus {
     outline: none;
-    border-bottom: 2px solid rgba(0, 120, 215, 1);
+    background-color: var(--control-fill-color-input-active-brush);
+    border-bottom: 2px solid var(--accent-fill-color-default-brush);
 }
 
 .chat-frame {
@@ -125,6 +153,10 @@ textarea.config-input-text {
     margin-top: .8em;
     display: flex;
     flex-wrap: wrap;
+}
+
+.form-group-header {
+    margin: 1em 0.1em -0.5em 0.1em !important;
 }
 
 .form-group>* {
@@ -150,6 +182,7 @@ textarea.config-input-text {
 input[type="color"] {
     -webkit-appearance: none;
     border: none;
+    border-color: transparent;
 }
 
 input[type="color"]::-webkit-color-swatch-wrapper {
@@ -158,6 +191,7 @@ input[type="color"]::-webkit-color-swatch-wrapper {
 
 input[type="color"]::-webkit-color-swatch {
     border: none;
+    border-color: transparent;
     border-radius: 4px;
     padding: 0;
     width: 100%;
@@ -177,6 +211,8 @@ select.config-input-text {
     padding-right: 12px;
     padding-top: 4px;
 }
+
+.config-input-number {}
 
 .checkbox {
     display: flex;
@@ -205,31 +241,60 @@ select.config-input-text {
     height: 18px;
     width: 18px;
     margin-right: 8px;
-    border: 1px solid rgb(243, 242, 241);
     border-radius: 2px;
-    background-color: rgba(31, 31, 31, 1);
+    border: 1px solid var(--control-strong-stroke-color-default-brush);
+    background-color: var(--control-alt-fill-color-secondary-brush);
+    transition: background ease-out 0.066s;
     color: transparent;
 }
 
-.checkbox:hover input~.checkmark {
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    background-color: rgba(43, 43, 43, 1);
+/* checked */
+.checkbox input:checked~.checkmark {
+    border: 1px solid var(--accent-fill-color-default-brush);
+    background-color: var(--accent-fill-color-default-brush);
+    color: var(--text-on-accent-fill-color-primary-brush)
 }
 
-.checkbox input:checked~.checkmark {
-    border: 1px solid rgba(0, 120, 215, 1);
-    background-color: rgba(0, 120, 215, 1);
+/* unchecked pointer over */
+.checkbox:hover input~.checkmark {
+    border: 1px solid var(--control-strong-stroke-color-default-brush);
+    background-color: var(--control-alt-fill-color-tertiary-brush);
+}
+
+
+/* unchecked pointer pressed */
+.checkbox input:active~.checkmark {
+    border: 1px solid var(--control-strong-stroke-color-disabled-brush);
+    background-color: var(--control-alt-fill-color-quarternary-brush);
+    color: transparent;
+}
+
+/* checked pointer over */
+.checkbox:hover input:checked~.checkmark {
+    border: 1px solid var(--accent-fill-color-secondary-brush);
+    background-color: var(--accent-fill-color-secondary-brush);
+}
+
+/* checked pointer pressed */
+.checkbox input:active:checked~.checkmark {
+    border: 1px solid var(--accent-fill-color-tertiary-brush);
+    background-color: var(--accent-fill-color-tertiary-brush);
     color: rgba(255, 255, 255, 1);
 }
 
-.checkbox input:active~.checkmark {
-    border: 1px solid rgba(0, 120, 215, 1);
-    background-color: rgba(0, 90, 158, 1);
-    color: transparent;
-}
 
 .checkmark::after {
     content: "\E73E";
+}
+
+
+input[type="range"] {
+    margin-top: 8px;
+    height: 31px;
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+    -webkit-appearance: none;
 }
 
 @media only screen and (max-width: 1120px) {
@@ -246,4 +311,74 @@ select.config-input-text {
     .config-example {
         display: none;
     }
+}
+
+.form-group-font {
+    display: flex;
+    flex-direction: row;
+}
+
+.form-group-font-label {
+    flex: 1;
+}
+
+.form-group-font-help {
+    text-align: right;
+    appearance: none;
+    border: none;
+    background: transparent;
+    padding: 0;
+    margin: 0;
+    color: var(--accent-fill-color-default-brush);
+    cursor: pointer;
+}
+
+
+.btn {
+    background: var(--system-base-low-color);
+    border: 1px solid var(--system-base-low-color);
+    color: var(--system-base-high-color);
+    font-size: 10.5pt;
+    border-radius: 4px;
+    padding: 6px 11px 5px 11px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    vertical-align: middle;
+    outline: none;
+    transition: background 0.15s ease-in-out, border-color 0.15s ease-in-out;
+    font-family: inherit;
+}
+
+.btn:hover {
+    color: var(--system-base-high-color);
+    border-color: var(--system-base-medium-low-color);
+    outline: none;
+}
+
+.btn:active {
+    color: var(--system-base-high-color);
+    background: var(--system-base-medium-low-color);
+    outline: none;
+    border-color: transparent;
+}
+
+.btn-accent {
+    background: var(--accent-fill-color-default-brush);
+    border: 1px solid var(--accent-fill-color-default-brush);
+    color: var(--text-on-accent-fill-color-primary-brush);
+}
+
+.btn-accent:hover {
+    background: var(--accent-fill-color-secondary-brush);
+    border: 1px solid var(--accent-fill-color-secondary-brush);
+    color: var(--text-on-accent-fill-color-primary-brush);
+    outline: none;
+}
+
+.btn-accent:active {
+    background: var(--accent-fill-color-tertiary-brush);
+    border: 1px solid var(--control-fill-color-transparent-brush);
+    color: var(--text-on-accent-fill-color-secondary-brush);
+    outline: none;
 }

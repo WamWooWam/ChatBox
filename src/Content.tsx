@@ -1,24 +1,20 @@
 import React, { useContext } from 'react';
-import { EmotesContext } from './Chat';
+import { ConfigContext, EmotesContext } from "./Contexts";
 import { Emote, TwitchEmote } from './Types';
-import { createSrcSet } from './Utils';
+import { createEmoteSrcSet } from './Utils';
 
 interface ContentProps {
   text: string;
-  emotes: string;
+  emotes?: string;
+  me?: boolean;
 }
-
 
 export const Content = (props: ContentProps) => {
   let text = props.text;
   let rawEmotes = props.emotes ?? ""
 
   // this has to be done before you parse emotes
-  let isMe = false;
-  if (/^\x01ACTION.*\x01$/.test(text)) {
-    isMe = true;
-    text = text.replace(/^\x01ACTION/, '').replace(/\x01$/, '').trim();
-  }
+  let isMe = props.me !== undefined ? props.me : false;
 
   // emotes appear as <emoteid>:<start>-<end>,<start>-<end>/ (e.g. 302347771:16-26,33-43)
   let emotes: Array<TwitchEmote> = [];
@@ -78,6 +74,8 @@ export const Content = (props: ContentProps) => {
 
   content.push(text.substr(index, text.length - index));  
 
+  let config = useContext(ConfigContext);
+  let emoteScale = Math.max(1, Math.min(4, Math.round(config!.fontSize / 15)))
   let elements: Array<any> = [];
   for (const item of content) {
     if (typeof item === 'string') {
@@ -86,7 +84,7 @@ export const Content = (props: ContentProps) => {
     }
 
     let emote = item as Emote;
-    elements.push(<img className="emote" key={item.key} alt={item.id} srcSet={createSrcSet(emote.urls)} src={emote.urls[0]} />);
+    elements.push(<img className={"emote emote-scale-" + emoteScale} key={(item.id + "-" + item.key)} alt={item.id} src={emote.urls[0]} srcSet={createEmoteSrcSet(emote.urls)} />);
   }
 
   return (

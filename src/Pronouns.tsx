@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { ConfigContext, PronounsContext } from './Chat';
+import { ConfigContext, PronounsContext } from "./Contexts";
 
 interface PronounsProps {
     nick: string;

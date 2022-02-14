@@ -1,22 +1,34 @@
-import React, { Component } from 'react';
-import { parse, IRCMessage } from "irc-message-ts";
+import { Component } from 'react';
 import { Message } from "./Message"
-import { BTTVEmote, BTTVUser, Configuration } from "./Types"
-import { fetchJSON, fetchTwitch } from "./Utils"
+import { Cheer, Configuration, EmoteEventUpdate, ChatMessage } from "./Types"
+import { fetchJSON } from "./Utils"
+import { ColorAdjuster } from './Color';
+import { ConfigContext, ColorContext, BadgesContext, EmotesContext, PronounsContext } from './Contexts';
+import { TwitchApi } from './api/Twitch';
+import { ClientId } from './ClientId';
+import { Client as TMIClient, Userstate } from "tmi.js"
 import './Chat.css';
+import { FFZ } from './api/FFZ';
+import { BTTV } from './api/BTTV';
+import { SevenTV } from './api/7TV';
 
 interface ChatState {
   connected: boolean;
-  messages: Array<IRCMessage>
-  badges: Map<string, string[]>;
+  messages: Array<ChatMessage>
+  badges: Map<string, string[][]>;
   emotes: Map<string, string[]>;
+  cheers: Map<string, Cheer>;
+  colorAdjuster: ColorAdjuster;
+
+  tmiClient?: TMIClient;
+  twitchApi?: TwitchApi;
 
   pronounDisplay: Map<string, string>;
   pronounUsers: Map<string, Pronoun>;
 
   channelId?: string;
   channelName?: string;
-  webSocket?: WebSocket;
+  sevenTvEvents?: EventSource;
 
   errorMessage?: string;
 }
@@ -26,21 +38,25 @@ interface Pronoun {
   pronoun: string;
 }
 
-interface Pronouns {
+export interface Pronouns {
   displayMap: Map<string, string>;
   userMap: Map<string, Pronoun>;
   fetchPronouns: (nick: string) => void;
 }
 
-export const ConfigContext = React.createContext<Configuration | null>(null);
-export const BadgesContext = React.createContext<Map<string, string[]>>(new Map());
-export const EmotesContext = React.createContext<Map<string, string[]>>(new Map());
-export const PronounsContext = React.createContext<Pronouns | null>(null);
-
 export class Chat extends Component<Configuration, ChatState> {
-  constructor(props: any) {
+  constructor(props: Configuration) {
     super(props);
-    let state: ChatState = { connected: false, messages: [], badges: new Map(), emotes: new Map(), pronounUsers: new Map(), pronounDisplay: new Map() };
+    let state: ChatState = {
+      connected: false,
+      messages: [],
+      badges: new Map(),
+      emotes: new Map(),
+      cheers: new Map(),
+      pronounUsers: new Map(),
+      pronounDisplay: new Map(),
+      colorAdjuster: new ColorAdjuster()
+    };
     this.state = state;
   }
 
@@ -48,58 +64,133 @@ export class Chat extends Component<Configuration, ChatState> {
     await this.load();
   }
 
-  async componentDidUpdate(previousProps) {
-    if (this.props.channelName !== previousProps.channelName) {
+  async componentDidUpdate(previousProps: Configuration) {
+    if (this.props.accessToken !== previousProps.accessToken) {
       await this.load();
+    }
+
+    if (this.props.readableColours !== previousProps.readableColours ||
+      this.props.readableContrast !== previousProps.readableContrast ||
+      this.props.readableBackground !== previousProps.readableBackground ||
+      this.props.readableMode !== previousProps.readableMode) {
+      this.setState({ colorAdjuster: new ColorAdjuster(this.props.readableBackground, (!this.props.readableColours ? 0 : this.props.readableMode), this.props.readableContrast) });
     }
   }
 
-  async load() {
-    this.setState({ errorMessage: undefined, messages: [] });
+  componentWillUnmount() {
+    this.cleanup();
+  }
 
-    if (!this.props.channelName) {
+  async load() {
+    this.cleanup();
+
+    if (!this.props.accessToken) {
       this.setState({ errorMessage: "No channel specifed!" });
       return;
     }
 
-    if (this.state.webSocket)
-      this.state.webSocket.close();
+    try {
+      let twitchApi = new TwitchApi(ClientId, this.props.accessToken);
+      let users = await twitchApi.getUsers();
+      if (!users || !users.length) {
+        this.setState({ errorMessage: "Specified channel doesn't exist!" });
+        return;
+      }
 
-    let data = await fetchTwitch(`https://api.twitch.tv/v5/users?login=${this.props.channelName}`);
-    if (!data.users?.length) {
-      this.setState({ errorMessage: "Specified channel doesn't exist!" });
+      this.setState({ channelId: users[0].id, channelName: users[0].login, twitchApi: twitchApi });
+      this.connect();
+    } catch (error) {
+      // BUGBUG this is terrible
+      localStorage.removeItem("access_token");
+      window.location.reload();
       return;
     }
 
-    this.setState({ channelId: data.users[0]._id, channelName: this.props.channelName });
-
-    let socket = new WebSocket("wss://irc-ws.chat.twitch.tv", 'irc');
-    socket.addEventListener("open", this.onSocketOpen.bind(this));
-    socket.addEventListener("close", this.onSocketClose.bind(this));
-    socket.addEventListener("message", this.onSocketMessage.bind(this));
-    this.setState({ webSocket: socket });
-
     let encodedId = encodeURIComponent(this.state.channelId!);
-    await Promise.all([this.loadBadges(encodedId), this.loadEmotes(encodedId), this.loadPronouns()]);
+    await Promise.all([this.loadBadges(encodedId), this.loadEmotes(encodedId), this.loadCheers(encodedId), this.loadPronouns()]);
   }
 
-  async loadBadges(encodedId: string) {
+  private cleanup() {
+    let events = this.state.sevenTvEvents;
+    let tmiClient = this.state.tmiClient;
+
+    this.setState({
+      errorMessage: undefined,
+      messages: [],
+      colorAdjuster: new ColorAdjuster(this.props.readableBackground, this.props.readableMode, this.props.readableContrast),
+      sevenTvEvents: undefined,
+      tmiClient: undefined,
+      emotes: new Map(),
+      badges: new Map(),
+      pronounUsers: new Map(),
+      pronounDisplay: new Map(),
+      connected: false
+    });
+
+    if (tmiClient) {
+      tmiClient.disconnect();
+    }
+
+    if (events) {
+      events.close();
+    }
+  }
+
+  private connect() {
+    let client = new TMIClient({
+      options: { debug: true, clientId: ClientId, skipUpdatingEmotesets: true },
+      identity: { username: this.state.channelName!, password: this.props.accessToken },
+      channels: [this.state.channelName!]
+    });
+
+    client.addListener("message", this.onMessage.bind(this));
+    // TODO:
+    // client.addListener("messagedeleted")
+    // client.addListener("clearchat")
+    client.connect();
+
+    this.setState({ tmiClient: client });
+  }
+
+  onMessage(channel: string, userstate: Userstate, message: string, self: boolean) {
+    console.log(userstate);
+    let chatMessage: ChatMessage = {
+      id: userstate.id!,
+      content: message,
+      type: userstate['message-type'] as string,
+      authorName: userstate.username,
+      authorDisplayName: userstate['display-name'],
+      authorColour: userstate.color,
+      rawBadges: userstate['badges-raw'],
+      rawEmotes: userstate['emotes-raw']
+    }
+
+    if (chatMessage.type === "action" || chatMessage.type === "chat")
+      this.setState(oldState => ({ messages: [...(oldState.messages.length >= 50 ? oldState.messages.slice(1, 50) : oldState.messages), chatMessage] }));
+  }
+
+  private async loadBadges(encodedId: string) {
+    if (!!!this.state.twitchApi) return;
+
     let badgeSets = await Promise.all([ // TODO: FFZ custom badges
-      fetchTwitch(`https://badges.twitch.tv/v1/badges/global/display`),
-      fetchTwitch(`https://badges.twitch.tv/v1/badges/channels/${encodedId}/display`)
+      this.state.twitchApi.getGlobalBadges(),
+      this.state.twitchApi.getUserBadges(encodedId)
     ]);
 
-    let badges = new Map<string, string[]>();
-    for (const badgeSet of badgeSets) {
-      let set = badgeSet.badge_sets;
-      for (const badgeName in set) {
-        for (const badgeVersion in set[badgeName].versions) {
-          badges.set(`${badgeName}/${badgeVersion}`, [
-            set[badgeName].versions[badgeVersion].image_url_1x,
-            set[badgeName].versions[badgeVersion].image_url_2x,
-            set[badgeName].versions[badgeVersion].image_url_4x,
+    let badges = new Map<string, string[][]>();
+    for (const badgeSetList of badgeSets) {
+      for (const badgeSet of badgeSetList) {
+        let badgeName = badgeSet.set_id;
+        let badgeVersions: string[][] = [];
+        for (const badgeVersion in badgeSet.versions) {
+          badgeVersions.push([
+            badgeSet.versions[badgeVersion].image_url_1x,
+            badgeSet.versions[badgeVersion].image_url_2x,
+            badgeSet.versions[badgeVersion].image_url_4x,
           ]);
         }
+
+        badges.set(badgeName, badgeVersions);
       }
     }
 
@@ -107,54 +198,86 @@ export class Chat extends Component<Configuration, ChatState> {
     this.setState({ badges });
   }
 
-  async loadEmotes(encodedId: string) {
+  private async loadCheers(encodedId: string) {
+    //let cheers = await fetchTwitch(`https://api.twitch.tv/helix/bits/cheermotes?channel_id=${encodedId}`)
+    // for (const action of cheers.actions) {
+    //   let cheer: Cheer = { prefixes: new Map() }
+    //   for (const tier of action.tiers) {
+
+    //   }
+    // }
+  }
+
+  private async loadEmotes(encodedId: string) {
     let emotes = new Map<string, string[]>();
-    let bttvEmotes: Array<Array<BTTVEmote> | BTTVUser> = await Promise.all([
-      fetchJSON('https://api.betterttv.net/3/cached/frankerfacez/emotes/global'),
-      fetchJSON(`https://api.betterttv.net/3/cached/frankerfacez/users/twitch/${encodedId}`),
-      fetchJSON('https://api.betterttv.net/3/cached/emotes/global'),
-      fetchJSON(`https://api.betterttv.net/3/cached/users/twitch/${encodedId}`),
-      fetchJSON('https://api.7tv.app/v2/emotes/global'),
-      fetchJSON(`https://api.7tv.app/v2/users/${encodedId}/emotes`),
-    ]);
 
-    for (let emoteSet of bttvEmotes) {
-      if (!Array.isArray(emoteSet)) {
-        if (emoteSet.channelEmotes) {
-          emoteSet = emoteSet.channelEmotes.concat(emoteSet.sharedEmotes);
-        }
-      }
-
-      if (!Array.isArray(emoteSet)) continue;
-
-      for (const emote of emoteSet as Array<BTTVEmote>) {
-        if (emote.images) {
-          emotes.set(emote.code, [emote.images['1x'], emote.images['2x'], emote.images['4x']]);
-          continue;
-        }
-
-        if (emote.code) {
-          emotes.set(emote.code, [
-            `https://cdn.betterttv.net/emote/${emote.id}/1x`,
-            `https://cdn.betterttv.net/emote/${emote.id}/2x`,
-            `https://cdn.betterttv.net/emote/${emote.id}/3x`
-          ]);
-
-          continue;
-        }
-
-        if (emote.urls) {
-          emotes.set(emote.name!, emote.urls.map(e => e[1]));
-          continue;
-        }
-      }
+    let ffzEmotes = await FFZ.fetchGlobalEmotes();
+    ffzEmotes.push(...await FFZ.fetchChannelEmotes(encodedId))
+    for (const emote of ffzEmotes) {
+      emotes.set(emote.code, [emote.images['1x'], emote.images['2x'], emote.images['4x']])
     }
+
+    let bttvUser = await BTTV.fetchUser(encodedId);
+    let bttvEmotes = await BTTV.fetchGlobalEmotes();
+    bttvEmotes.push(...bttvUser.channelEmotes);
+    bttvEmotes.push(...bttvUser.sharedEmotes);
+
+    for (const emote of bttvEmotes) {
+      emotes.set(emote.code, [
+        `https://cdn.betterttv.net/emote/${emote.id}/1x`,
+        `https://cdn.betterttv.net/emote/${emote.id}/2x`,
+        `https://cdn.betterttv.net/emote/${emote.id}/3x`
+      ]);
+    }
+
+    let sevenTVEmotes = await SevenTV.fetchGlobalEmotes();
+    sevenTVEmotes.push(...await SevenTV.fetchChannelEmotes(encodedId));
+    for (const emote of sevenTVEmotes) {
+      emotes.set(emote.name, emote.urls.map(e => e[1]));
+    }
+
+    this.sevenTVSubscribe();
 
     console.log("Loaded emotes", emotes);
     this.setState({ emotes });
   }
 
-  async loadPronouns() {
+  private async sevenTVSubscribe() {
+    let eventSource = new EventSource(`https://events.7tv.app/v1/channel-emotes?channel=${this.state.channelName!}`);
+
+    eventSource.addEventListener('ready', (ev: Event) => {
+      let message = ev as MessageEvent; // this is stupid lol
+      console.log(`7TV ready, ${message.data}`);
+    })
+
+    eventSource.addEventListener('update', (ev: Event) => {
+      let message = ev as MessageEvent; // this is stupid lol
+      let eventUpdate = JSON.parse(message.data) as EmoteEventUpdate;
+      if (eventUpdate === undefined) return;
+
+      let emotes = new Map<string, string[]>(this.state.emotes);
+
+      if (eventUpdate.action === "ADD") {
+        emotes.set(eventUpdate.name, [
+          `https://cdn.7tv.app/emote/${eventUpdate.emote_id}/1x`,
+          `https://cdn.7tv.app/emote/${eventUpdate.emote_id}/2x`,
+          `https://cdn.7tv.app/emote/${eventUpdate.emote_id}/3x`,
+        ]);
+
+        console.log(`7TV emotes: added ${eventUpdate.name}!`)
+      }
+      else if (eventUpdate.action === "REMOVE") {
+        emotes.delete(eventUpdate.name);
+        console.log(`7TV emotes: removed ${eventUpdate.name}!`)
+      }
+
+      this.setState({ emotes });
+    })
+
+    this.setState({ sevenTvEvents: eventSource });
+  }
+
+  private async loadPronouns() {
     let pronouns = new Map<string, string>();
     let pronounsJson = await fetchJSON("https://pronouns.alejo.io/api/pronouns");
     for (const value of pronounsJson) {
@@ -164,7 +287,7 @@ export class Chat extends Component<Configuration, ChatState> {
     this.setState({ pronounDisplay: pronouns });
   }
 
-  async fetchPronouns(userName: string) {
+  private async fetchPronouns(userName: string) {
     if (this.state.pronounUsers.has(userName)) return;
     this.state.pronounUsers.set(userName, { pending: true, pronoun: "" });
 
@@ -175,45 +298,6 @@ export class Chat extends Component<Configuration, ChatState> {
     this.setState({ pronounUsers: this.state.pronounUsers });
   }
 
-  onSocketOpen(ev: Event) {
-    this.sendIrc(`PASS ass`);
-    this.sendIrc(`NICK justinfan${Math.floor(Math.random() * 65536)}`);
-    this.sendIrc(`CAP REQ :twitch.tv/commands twitch.tv/tags`);
-    this.sendIrc(`JOIN #${this.props.channelName}`);
-  }
-
-  onSocketClose(ev: Event) {
-
-  }
-
-  onSocketMessage(ev: MessageEvent<string>) {
-    for (const message of ev.data.split('\r\n')) {
-      if (!message) continue;
-      let ircMessage = parse(message)!;
-      if (ircMessage === null) continue;
-
-      let command = ircMessage.command?.toLowerCase();
-      if (!command) continue;
-
-      switch (command) {
-        case "ping":
-          this.sendIrc(`PONG ${ircMessage.params[0]}`);
-          continue;
-        // case "clearchat":
-        //   this.setState({ messages: [] });
-        //   continue;
-        case "privmsg":
-          this.setState(oldState => ({ messages: [...(oldState.messages.length >= 50 ? oldState.messages.slice(1, 50) : oldState.messages), ircMessage] }));
-          continue;
-      }
-    }
-  }
-
-  sendIrc(message: string) {
-    if (this.state.webSocket === undefined) throw new Error("what the fuck lol");
-    this.state.webSocket.send(message + '\r\n');
-  }
-
   render() {
     let style = {
       color: this.props.fontColor ?? "white",
@@ -222,7 +306,7 @@ export class Chat extends Component<Configuration, ChatState> {
       fontSize: this.props.fontSize + "pt",
       fontWeight: this.props.fontWeight,
       filter: "",
-      webkitTextStroke: "",
+      WebkitTextStroke: "",
       stroke: "",
       strokeWidth: "",
     }
@@ -231,8 +315,8 @@ export class Chat extends Component<Configuration, ChatState> {
       style.filter = style.filter + `drop-shadow(${this.props.dropShadowOffset}px ${this.props.dropShadowOffset}px ${this.props.dropShadowBlur}px ${this.props.dropShadowColour})`
     }
 
-    if(this.props.outline) {
-      style.webkitTextStroke = `${this.props.outlineThickness}px ${this.props.outlineColour}`
+    if (this.props.outline) {
+      style.WebkitTextStroke = `${this.props.outlineThickness}px ${this.props.outlineColour}`
       style.stroke = this.props.outlineColour!
       style.strokeWidth = `${this.props.outlineThickness! * 7.5}px`
     }
@@ -253,13 +337,15 @@ export class Chat extends Component<Configuration, ChatState> {
       <div className="chat-container">
         <div className="chat-root" style={style}>
           <ConfigContext.Provider value={this.props}>
-            <BadgesContext.Provider value={this.state.badges}>
-              <EmotesContext.Provider value={this.state.emotes}>
-                <PronounsContext.Provider value={{ userMap: this.state.pronounUsers, displayMap: this.state.pronounDisplay, fetchPronouns: this.fetchPronouns.bind(this) }}>
-                  {this.state.messages.map(m => <Message key={m.tags.id} message={m} />)}
-                </PronounsContext.Provider>
-              </EmotesContext.Provider>
-            </BadgesContext.Provider>
+            <ColorContext.Provider value={this.state.colorAdjuster}>
+              <BadgesContext.Provider value={this.state.badges}>
+                <EmotesContext.Provider value={this.state.emotes}>
+                  <PronounsContext.Provider value={{ userMap: this.state.pronounUsers, displayMap: this.state.pronounDisplay, fetchPronouns: this.fetchPronouns.bind(this) }}>
+                    {this.state.messages.map(m => <Message key={m.id} message={m} />)}
+                  </PronounsContext.Provider>
+                </EmotesContext.Provider>
+              </BadgesContext.Provider>
+            </ColorContext.Provider>
           </ConfigContext.Provider>
         </div>
       </div>

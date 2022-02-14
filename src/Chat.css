@@ -10,13 +10,20 @@
   font-size: 20px;
   bottom: 0;
   margin: 0 12px 12px 12px;
-  width: calc(100% - 24px);
+  width: calc(100% - 24px);    
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .message {
   margin: 0;
   animation: ms-motion-slideLeftIn .2s cubic-bezier(0.1, 0.9, 0.2, 1) both,
     ms-motion-fadeOut .1s linear both;
+  transition: opacity .1s linear;
+}
+
+.message.hidden {
+  opacity: 0;
 }
 
 .badge {
@@ -24,6 +31,22 @@
   vertical-align: middle;
   top: -.2rem;
   margin-right: 4px;
+  width: 18px;
+}
+
+.badge-scale-2 {
+  width: 28px;
+  margin-right: 6px;
+}
+
+.badge-scale-3 {
+  width: 36px;
+  margin-right: 8px;
+}
+
+.badge-scale-4 {
+  width: 54px;
+  margin-right: 12px;
 }
 
 .emote {
@@ -31,6 +54,18 @@
   vertical-align: middle;
   top: -.2rem;
   max-height: 28px;
+}
+
+.emote-scale-2 {
+  min-height: 42px;
+}
+
+.emote-scale-3 {
+  min-height: 56px;
+}
+
+.emote-scale-4 {
+  min-height: 84px;
 }
 
 .me>.emote {
@@ -106,9 +141,33 @@
   align-items: center;
   justify-content: center;
   flex-direction: column;
+  color: white;
 }
 
 .chat-error p {
   margin-top: 1rem;
   font-size: 16pt;
+}
+
+.fatal-chat-error {
+  display: flex;
+  height: 100%;
+  margin: 0 2em 0 2em;
+  align-items: center;
+  justify-content: center;
+  flex-direction: row;
+  background: var(---card-background-fill-color-default-brush);
+}
+
+.fatal-chat-error img {
+  align-self: flex-start;
+}
+
+.fatal-chat-error p {
+  margin: 0.25rem 0 0.25rem 0;
+}
+
+.fatal-chat-error h4 {
+  font-size: 14pt;
+  margin: 0.5rem 0 0 0;
 }
