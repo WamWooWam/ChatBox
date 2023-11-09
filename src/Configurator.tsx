@@ -1,17 +1,31 @@
+import "./config.css"
+
+import * as MsgPack from "@msgpack/msgpack"
+
+import { ClientId, Scopes } from './ClientId';
 import React, { ChangeEvent, Component } from 'react';
+
 import { Chat } from './Chat';
 import { Configuration } from './Types';
-import * as MsgPack from "@msgpack/msgpack"
-import "./config.css"
 import { DefaultConfig } from './Constants';
-import { ClientId, Scopes } from './ClientId';
 import { TwitchApi } from './api/Twitch';
+
+type FontData = {
+  family: string,
+}
+
+declare global {
+  interface Window {
+    queryLocalFonts: () => Promise<FontData[]>
+  }
+}
 
 interface ConfiguratorState {
   connecting: boolean;
   config: Configuration;
   chatConfig?: Configuration;
   window: Window | null;
+  fonts: FontData[]
 }
 
 
@@ -31,7 +45,7 @@ export class Configurator extends Component<{}, ConfiguratorState> {
 
   constructor(props) {
     super(props);
-    this.state = { connecting: true, config: DefaultConfig, chatConfig: DefaultConfig, window: null };
+    this.state = { connecting: true, config: DefaultConfig, chatConfig: DefaultConfig, window: null, fonts: [] };
     this.onWindowMessage = this.onWindowMessage.bind(this);
   }
 
@@ -42,6 +56,12 @@ export class Configurator extends Component<{}, ConfiguratorState> {
     }
     else {
       this.setState({ connecting: false });
+    }
+
+    if ('queryLocalFonts' in window) {
+      window.queryLocalFonts().then((fonts: FontData[]) => {
+        this.setState({ fonts: fonts.filter((f, i, a) => a.findIndex(o => o.family == f.family) === i) });
+      });
     }
   }
 
@@ -89,7 +109,7 @@ export class Configurator extends Component<{}, ConfiguratorState> {
   onWindowMessage(event: MessageEvent) {
     if (typeof event.data !== 'string') return;
     if (event.origin !== window.location.origin) return;
-    
+
     window.removeEventListener("message", this.onWindowMessage);
     let queryParams = new URLSearchParams(event.data.substring(1));
     let accessToken = queryParams.get("access_token");
@@ -179,13 +199,18 @@ export class Configurator extends Component<{}, ConfiguratorState> {
         {/* <button className="form-group-font-help" onClick={this.showHelpDialog.bind(this)}>Help!</button> */}
       </div>
       <div className="form-group">
-        <input type="text"
-          className="config-input-text"
-          placeholder="Font Name"
-          size={1}
-          style={{ flex: 3 }}
-          value={this.state.config.fontName}
-          onChange={(e) => this.onValueChange("fontName", e.target.value)} />
+        {this.state.fonts.length ?
+          <select className="config-input-text" style={{ flex: 3 }} value={this.state.config.fontName} onChange={(e) => this.onValueChange("fontName", e.target.value)}>
+            {this.state.fonts.map((font) => <option value={font.family}>{font.family}</option>)}
+          </select>
+          : <input type="text"
+            className="config-input-text"
+            placeholder="Font Name"
+            size={1}
+            style={{ flex: 3 }}
+            value={this.state.config.fontName}
+            onChange={(e) => this.onValueChange("fontName", e.target.value)} />
+        }
 
         <input type="text"
           className="config-input-text config-input-number"
