@@ -90,6 +90,10 @@ a {
     background-image: url(images/starlight-carnival-1.jpg);
     background-position: center;
     background-size: cover;
+
+    @supports (background-image: url(images/starlight-carnival-1.webp)) {
+        background-image: url(images/starlight-carnival-1.webp);
+      }
 }
 
 .config-example>.chat-container {
