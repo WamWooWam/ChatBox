@@ -1,4 +1,4 @@
-import { fetchJSON } from "../Utils"
+import { fetchJSON } from "./Utils.js"
 
 export interface SevenTVEmote {
     id: string,

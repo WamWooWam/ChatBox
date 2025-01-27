@@ -1,6 +1,6 @@
 import { ConfigContext, EmotesContext } from "./Contexts";
 import { Emote, TwitchEmote } from './Types';
-import React, { useContext } from 'react';
+import React, { memo, useContext } from 'react';
 
 import { createEmoteSrcSet } from './Utils';
 
@@ -10,7 +10,7 @@ interface ContentProps {
   me?: boolean;
 }
 
-export const Content = (props: ContentProps) => {
+export const Content = memo((props: ContentProps) => {
   let text = props.text;
   let rawEmotes = props.emotes ?? ""
 
@@ -91,4 +91,4 @@ export const Content = (props: ContentProps) => {
   return (
     <span className={"message-content " + (isMe ? "me" : "")}>{elements}</span>
   );
-}
+})

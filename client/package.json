@@ -2,7 +2,7 @@
   "name": "@chatbox/client",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://wamwoowam.github.io/chatbox-v2/",
+  "homepage": ".",
   "dependencies": {
     "@babel/core": "7.12.3",
     "@msgpack/msgpack": "^2.8.0",

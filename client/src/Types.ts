@@ -1,7 +1,7 @@
 
 export interface Configuration {
-  channelName?: string;
-  accessToken: string;
+  channelName: string;
+  accessToken?: string;
 
   fontName: string
   fontSize: number
@@ -35,7 +35,7 @@ export interface Configuration {
 
 export interface ChatMessage {
   id: string
-  content: string  
+  content: string
   type: string;
 
   authorName?: string;
@@ -75,47 +75,4 @@ export enum ColorAdjustmentMode {
   luv,
   hslLoop,
   rgbLoop
-}
-
-export interface EmoteEventUpdate {
-  // The channel this update affects.
-  channel: string;
-  // The ID of the emote.
-  emote_id: string;
-  // The name or channel alias of the emote.
-  name: string;
-  // The action done.
-  action: "ADD" | "REMOVE" | "UPDATE";
-  // The user who caused this event to trigger.
-  actor: string;
-  // An emote object. Null if the action is "REMOVE".
-  emote?: ExtraEmoteData;
-}
-
-interface ExtraEmoteData {
-  // Original name of the emote.
-  name: string;
-  // The visibility bitfield of this emote.
-  visibility: number;
-  // The MIME type of the images.
-  mime: string;
-  // The TAGs on this emote.
-  tags: string[];
-  // The widths of the images.
-  width: [number, number, number, number];
-  // The heights of the images.
-  height: [number, number, number, number];
-  // The animation status of the emote.
-  animated: boolean;
-  // Infomation about the uploader.
-  owner: {
-    // 7TV ID of the owner.
-    id: string;
-    // Twitch ID of the owner.
-    twitch_id: string;
-    // Twitch DisplayName of the owner.
-    display_name: string;
-    // Twitch Login of the owner. 
-    login: string;
-  }
 }

@@ -1,18 +1,14 @@
 import './Chat.css';
 
 import { BadgesContext, ColorContext, ConfigContext, EmotesContext, PronounsContext } from './Contexts';
-import { ChatMessage, Cheer, Configuration, EmoteEventUpdate } from "./Types"
+import { ChatMessage, Cheer, Configuration } from "./Types"
 import { ChatUserstate, Client as TMIClient } from "tmi.js"
 import React, { Component } from 'react';
 
-import BTTV from './api/BTTV';
 import { ClientId } from './ClientId';
 import { ColorAdjuster } from './Color';
 import ErrorIcon from './ErrorIcon';
-import FFZ from './api/FFZ';
 import { Message } from "./Message"
-import SevenTV from './api/7TV';
-import TwitchApi from './api/Twitch';
 import { fetchJSON } from "./Utils"
 
 interface ChatState {
@@ -24,14 +20,12 @@ interface ChatState {
   colorAdjuster: ColorAdjuster;
 
   tmiClient?: TMIClient;
-  twitchApi?: TwitchApi;
 
   pronounDisplay: Map<string, string>;
   pronounUsers: Map<string, Pronoun>;
 
   channelId?: string;
   channelName?: string;
-  sevenTvEvents?: EventSource;
 
   errorMessage?: string;
 }
@@ -68,7 +62,7 @@ export class Chat extends Component<Configuration, ChatState> {
   }
 
   async componentDidUpdate(previousProps: Configuration) {
-    if (this.props.accessToken !== previousProps.accessToken) {
+    if (this.props.channelName !== previousProps.channelName) {
       await this.load();
     }
 
@@ -87,46 +81,35 @@ export class Chat extends Component<Configuration, ChatState> {
   async load() {
     this.cleanup();
 
-    if (!this.props.accessToken) {
+    if (!this.props.channelName) {
       this.setState({ errorMessage: "No channel specifed!" });
       return;
     }
 
-    let channelId: string, channelName: string, twitchApi: TwitchApi;
-    try {
-      twitchApi = new TwitchApi(ClientId, this.props.accessToken);
-
-      let users = await twitchApi.getUsers();
-      if (!users || !users.length) {
-        this.setState({ errorMessage: "Specified channel doesn't exist!" });
-        return;
-      }
-
-      channelId = users[0].id;
-      channelName = users[0].login;
-
-      this.setState({ channelId, channelName, twitchApi });
-      this.connect(channelName);
-    } catch (error) {
-      // BUGBUG this is terrible
-      localStorage.removeItem("access_token");
-      window.location.reload();
+    const data = await fetchJSON(`api/state/${this.props.channelName}`);
+    if (data.error) {
+      this.setState({ errorMessage: data.error });
       return;
     }
 
-    let encodedId = encodeURIComponent(channelId!);
-    await Promise.all([this.loadBadges(encodedId, twitchApi), this.loadEmotes(encodedId), this.loadCheers(encodedId), this.loadPronouns()]);
+    this.setState({
+      channelId: data.id,
+      channelName: data.username,
+      badges: new Map(Object.entries(data.badges)),
+      emotes: new Map(Object.entries(data.emotes)),
+      pronounDisplay: new Map(Object.entries(data.pronouns)),
+    });
+
+    this.connect(data.username);
   }
 
   private cleanup() {
-    let events = this.state.sevenTvEvents;
     let tmiClient = this.state.tmiClient;
 
     this.setState({
       errorMessage: undefined,
       messages: [],
       colorAdjuster: new ColorAdjuster(this.props.readableBackground, this.props.readableMode, this.props.readableContrast),
-      sevenTvEvents: undefined,
       tmiClient: undefined,
       emotes: new Map(),
       badges: new Map(),
@@ -138,16 +121,12 @@ export class Chat extends Component<Configuration, ChatState> {
     if (tmiClient) {
       tmiClient.disconnect();
     }
-
-    if (events) {
-      events.close();
-    }
   }
 
   private connect(channelName: string) {
     let client = new TMIClient({
       options: { debug: true, clientId: ClientId, skipUpdatingEmotesets: true },
-      identity: { username: channelName!, password: this.props.accessToken },
+      // identity: { username: channelName!, password: this.props.accessToken },
       channels: [channelName!]
     });
 
@@ -175,127 +154,6 @@ export class Chat extends Component<Configuration, ChatState> {
 
     if (chatMessage.type === "action" || chatMessage.type === "chat")
       this.setState(oldState => ({ messages: [...(oldState.messages.length >= 50 ? oldState.messages.slice(1, 50) : oldState.messages), chatMessage] }));
-  }
-
-  private async loadBadges(encodedId: string, twitchApi: TwitchApi) {
-    let badgeSets = await Promise.all([ // TODO: FFZ custom badges
-      twitchApi.getGlobalBadges(),
-      twitchApi.getUserBadges(encodedId)
-    ]);
-
-    let badges = new Map<string, string[][]>();
-    for (const badgeSetList of badgeSets) {
-      for (const badgeSet of badgeSetList) {
-        let badgeName = badgeSet.set_id;
-        let badgeVersions: string[][] = [];
-        for (const badgeVersion in badgeSet.versions) {
-          badgeVersions.push([
-            badgeSet.versions[badgeVersion].image_url_1x,
-            badgeSet.versions[badgeVersion].image_url_2x,
-            badgeSet.versions[badgeVersion].image_url_4x,
-          ]);
-        }
-
-        badges.set(badgeName, badgeVersions);
-      }
-    }
-
-    console.log("Loaded badges", badges);
-    this.setState({ badges });
-  }
-
-  private async loadCheers(encodedId: string) {
-    //let cheers = await fetchTwitch(`https://api.twitch.tv/helix/bits/cheermotes?channel_id=${encodedId}`)
-    // for (const action of cheers.actions) {
-    //   let cheer: Cheer = { prefixes: new Map() }
-    //   for (const tier of action.tiers) {
-
-    //   }
-    // }
-  }
-
-  private async loadEmotes(encodedId: string) {
-    console.log("Loading emotes", encodedId);
-    let emotes = new Map<string, string[]>();
-
-    let ffzEmotes = await FFZ.fetchGlobalEmotes();
-    ffzEmotes.push(...await FFZ.fetchChannelEmotes(encodedId))
-    for (const emote of ffzEmotes) {
-      emotes.set(emote.code, [emote.images['1x'], emote.images['2x'], emote.images['4x']])
-    }
-
-    let bttvUser = await BTTV.fetchUser(encodedId);
-    let bttvEmotes = await BTTV.fetchGlobalEmotes();
-    bttvEmotes.push(...bttvUser.channelEmotes);
-    bttvEmotes.push(...bttvUser.sharedEmotes);
-
-    for (const emote of bttvEmotes) {
-      emotes.set(emote.code, [
-        `https://cdn.betterttv.net/emote/${emote.id}/1x`,
-        `https://cdn.betterttv.net/emote/${emote.id}/2x`,
-        `https://cdn.betterttv.net/emote/${emote.id}/3x`
-      ]);
-    }
-
-    let sevenTVEmotes = await SevenTV.fetchGlobalEmotes();
-    sevenTVEmotes.push(...await SevenTV.fetchChannelEmotes(encodedId));
-    for (const emote of sevenTVEmotes) {
-      let baseUrl = emote.data.host.url;
-      let files = emote.data.host.files.filter(f => f.format === 'WEBP');
-      if (!files.length) continue;
-
-      emotes.set(emote.name, files.map(e => `${baseUrl}/${e.name}`));
-    }
-
-    // this.sevenTVSubscribe();
-
-    console.log("Loaded emotes", emotes);
-    this.setState({ emotes });
-  }
-
-  private async sevenTVSubscribe() {
-    let eventSource = new EventSource(`https://events.7tv.app/v1/channel-emotes?channel=${this.state.channelName!}`);
-
-    eventSource.addEventListener('ready', (ev: Event) => {
-      let message = ev as MessageEvent; // this is stupid lol
-      console.log(`7TV ready, ${message.data}`);
-    })
-
-    eventSource.addEventListener('update', (ev: Event) => {
-      let message = ev as MessageEvent; // this is stupid lol
-      let eventUpdate = JSON.parse(message.data) as EmoteEventUpdate;
-      if (eventUpdate === undefined) return;
-
-      let emotes = new Map<string, string[]>(this.state.emotes);
-
-      if (eventUpdate.action === "ADD") {
-        emotes.set(eventUpdate.name, [
-          `https://cdn.7tv.app/emote/${eventUpdate.emote_id}/1x`,
-          `https://cdn.7tv.app/emote/${eventUpdate.emote_id}/2x`,
-          `https://cdn.7tv.app/emote/${eventUpdate.emote_id}/3x`,
-        ]);
-
-        console.log(`7TV emotes: added ${eventUpdate.name}!`)
-      }
-      else if (eventUpdate.action === "REMOVE") {
-        emotes.delete(eventUpdate.name);
-        console.log(`7TV emotes: removed ${eventUpdate.name}!`)
-      }
-
-      this.setState({ emotes });
-    })
-
-    this.setState({ sevenTvEvents: eventSource });
-  }
-
-  private async loadPronouns() {
-    let pronouns = new Map<string, string>();
-    let pronounsJson = await fetchJSON("https://pronouns.alejo.io/api/pronouns");
-    for (const value of pronounsJson) {
-      pronouns.set(value.name, value.display);
-    }
-
-    this.setState({ pronounDisplay: pronouns });
   }
 
   private async fetchPronouns(userName: string) {

@@ -1,11 +1,11 @@
-import React, { useContext } from 'react';
 import { ConfigContext, PronounsContext } from "./Contexts";
+import React, { memo, useContext } from 'react';
 
 interface PronounsProps {
     nick: string;
 }
 
-export const Pronouns = (props: PronounsProps) => {
+export const Pronouns = memo((props: PronounsProps) => {
     const configContext = useContext(ConfigContext);
     const pronounsContext = useContext(PronounsContext);
     if(!configContext?.showPronouns) return null;
@@ -18,4 +18,4 @@ export const Pronouns = (props: PronounsProps) => {
     }
 
     return (display ? <span className="pronouns">{display}</span> : null);
-}
+})

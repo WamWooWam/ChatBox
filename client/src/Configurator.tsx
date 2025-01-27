@@ -21,13 +21,12 @@ declare global {
 }
 
 interface ConfiguratorState {
-  connecting: boolean;
   config: Configuration;
   chatConfig?: Configuration;
   window: Window | null;
-  fonts: FontData[]
+  fonts: FontData[],
+  showFontsButton?: boolean;
 }
-
 
 const Checkbox = (props: { label: string, value: boolean, onChange: (event: ChangeEvent<HTMLInputElement>) => void }) => {
   return (
@@ -40,41 +39,26 @@ const Checkbox = (props: { label: string, value: boolean, onChange: (event: Chan
   )
 }
 
-
 export class Configurator extends Component<{}, ConfiguratorState> {
 
   constructor(props) {
     super(props);
-    this.state = { connecting: true, config: DefaultConfig, chatConfig: DefaultConfig, window: null, fonts: [] };
-    this.onWindowMessage = this.onWindowMessage.bind(this);
+    this.state = { config: DefaultConfig, chatConfig: DefaultConfig, window: null, fonts: [] };
   }
 
   componentDidMount() {
-    let token = localStorage.getItem("access_token");
-    if (token != null) {
-      this.validateToken(token);
-    }
-    else {
-      this.setState({ connecting: false });
-    }
-
-    if (typeof window.queryLocalFonts === "function") {
-      window.queryLocalFonts().then((fonts: FontData[]) => {
-        this.setState({ fonts: fonts.filter((f, i, a) => a.findIndex(o => o.family == f.family) === i) });
-      });
-    }
+    this.loadFonts();
   }
 
-  async validateToken(token: string) {
-    try {
-      await new TwitchApi(ClientId, token).getUsers(["wamwoowam"]);
-
-      this.onValueChange("accessToken", token);
-      localStorage.setItem("access_token", token);
-      this.setState({ connecting: false });
-    }
-    catch (e) {
-      // we dont have a valid token, kick back to the login screen
+  private loadFonts() {
+    if (typeof window.queryLocalFonts === "function") {
+      window.queryLocalFonts()
+        .then((fonts: FontData[]) => {
+          this.setState({ fonts: fonts.filter((f, i, a) => a.findIndex(o => o.family == f.family) === i) });
+        })
+        .catch((e) => {
+          this.setState({ showFontsButton: true });
+        });
     }
   }
 
@@ -83,39 +67,7 @@ export class Configurator extends Component<{}, ConfiguratorState> {
   }
 
   onValueChange<T>(name: string, newValue: T) {
-    if (this.state[name] !== newValue)
-      this.setState({ config: { ...this.state.config, [name]: newValue }, chatConfig: { ...this.state.config, [name]: newValue } });
-  }
-
-  showOAuthWindow() {
-    if (this.state.window !== null && !this.state.window.closed) {
-      this.state.window.focus();
-      return;
-    }
-
-    window.addEventListener("message", this.onWindowMessage);
-
-    let redirectUrl = `${window.location.origin}/chatbox-v2/auth.html`
-    let wnd = window.open(
-      `https://id.twitch.tv/oauth2/authorize?client_id=${ClientId}&redirect_uri=${redirectUrl}&response_type=token&scope=${Scopes}`,
-      "sign in",
-      "toolbar=no, menubar=no, width=600, height=700")
-
-    if (wnd != null) {
-      this.setState({ window: wnd });
-    }
-  }
-
-  onWindowMessage(event: MessageEvent) {
-    if (typeof event.data !== 'string') return;
-    if (event.origin !== window.location.origin) return;
-
-    window.removeEventListener("message", this.onWindowMessage);
-    let queryParams = new URLSearchParams(event.data.substring(1));
-    let accessToken = queryParams.get("access_token");
-    if (accessToken != null) {
-      this.validateToken(accessToken);
-    }
+    this.setState((state) => ({ config: { ...state.config, [name]: newValue }, chatConfig: { ...state.config, [name]: newValue } }));
   }
 
   showHelpDialog() {
@@ -136,6 +88,8 @@ export class Configurator extends Component<{}, ConfiguratorState> {
       }
     }
 
+    delete configDiff["accessToken"];
+
     let configString = btoa(String.fromCharCode(...MsgPack.encode(configDiff)));
 
     return (
@@ -152,22 +106,14 @@ export class Configurator extends Component<{}, ConfiguratorState> {
                   <p>This chat box is not yet finished so links may break in future! Please don't use it in your layouts yet.</p>
                 </div>
 
-                {
-                  this.state.connecting ?
-                    <p>Loading...</p> :
-                    <>
-                      {this.state.config.accessToken ? null : (this.renderSignInButton())}
-                      {this.state.config.accessToken ? (this.renderConfigSection()) : null}
-                    </>
-                }
+                {this.renderConfigSection()}
 
               </form>
 
-              {this.state.config.accessToken ?
-                (<div className="config-footer">
-                  <p>Paste this into a browser source!</p>
-                  <input className="config-input-text" readOnly={true} value={`${window.location.href}#${configString}`} />
-                </div>) : null}
+              <div className="config-footer">
+                <p>Paste this into a browser source!</p>
+                <input className="config-input-text" readOnly={true} value={`${window.location.href}#${configString}`} />
+              </div>
             </div>
           </div>
 
@@ -179,28 +125,30 @@ export class Configurator extends Component<{}, ConfiguratorState> {
     )
   }
 
-  renderSignInButton() {
-    return (<>
-      <div className="config-error">
-        <p>Sorry! Because the legacy Twitch API has been deprecated and is in the process of being decommissioned and limitations of the new API, you will now need to Sign in with Twitch to use this chatbox. You can read more about this <a href="https://blog.twitch.tv/en/2021/07/15/legacy-twitch-api-v5-shutdown-details-and-timeline/">on their blog</a>.</p>
-      </div>
-      <button className="btn btn-accent"
-        style={{ margin: "1em 0" }}
-        onClick={this.showOAuthWindow.bind(this)}>
-        Sign in with Twitch
-      </button>
-    </>);
-  }
-
   renderConfigSection() {
     return (<>
+      <label className="form-group-label">
+        Channel Name
+      </label>
+      <div className="form-group">
+        <input type="text"
+          className="config-input-text"
+          placeholder="wamwoowam"
+          value={this.state.config.channelName}
+          onChange={(e) => this.onValueChange("channelName", e.target.value)}
+          onBlur={this.updateChat.bind(this)} />
+      </div>
+
       <div className="form-group-label form-group-font">
         <label className="form-group-font-label">Font</label>
         {/* <button className="form-group-font-help" onClick={this.showHelpDialog.bind(this)}>Help!</button> */}
       </div>
       <div className="form-group">
         {this.state.fonts.length ?
-          <select className="config-input-text" style={{ flex: 3 }} value={this.state.config.fontName} onChange={(e) => this.onValueChange("fontName", e.target.value)}>
+          <select className="config-input-text"
+            style={{ flex: 3 }}
+            value={this.state.config.fontName}
+            onChange={(e) => this.onValueChange("fontName", e.target.value)}>
             {this.state.fonts.map((font) => <option value={font.family}>{font.family}</option>)}
           </select>
           : <input type="text"
@@ -211,6 +159,8 @@ export class Configurator extends Component<{}, ConfiguratorState> {
             value={this.state.config.fontName}
             onChange={(e) => this.onValueChange("fontName", e.target.value)} />
         }
+
+        {this.state.showFontsButton && this.state.fonts.length === 0 ? <button className="btn" onClick={() => this.loadFonts()}>Load Fonts</button> : null}
 
         <input type="text"
           className="config-input-text config-input-number"

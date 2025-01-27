@@ -1,13 +1,14 @@
 import { BadgesContext, ConfigContext } from "./Contexts";
-import React, { useContext } from 'react';
-import { createBadgeSrcSet } from "./Utils";
+import React, { memo, useContext } from 'react';
+
 import { BadgeInfo } from "tmi.js";
+import { createBadgeSrcSet } from "./Utils";
 
 interface BadgesProps {
   badges?: string
 }
 
-export const Badges = (props: BadgesProps) => {
+export const Badges = memo((props: BadgesProps) => {
   const configContext = useContext(ConfigContext);
   const badgeContext = useContext(BadgesContext);
 
@@ -31,4 +32,4 @@ export const Badges = (props: BadgesProps) => {
   return (
     <>{badgeElements}</>
   )
-}
+})
