@@ -1,4 +1,5 @@
-import { Component } from 'react';
+import React, { Component } from 'react';
+
 import ErrorSvg from "./images/error.svg"
 
 export class ApiError extends Component {

@@ -38,7 +38,7 @@ export interface ChatMessage {
   content: string  
   type: string;
 
-  authorName: string;
+  authorName?: string;
   authorDisplayName?: string;
   authorColour?: string;
 

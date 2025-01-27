@@ -1,16 +1,19 @@
-import { Component } from 'react';
-import { Message } from "./Message"
-import { Cheer, Configuration, EmoteEventUpdate, ChatMessage } from "./Types"
-import { fetchJSON } from "./Utils"
-import { ColorAdjuster } from './Color';
-import { ConfigContext, ColorContext, BadgesContext, EmotesContext, PronounsContext } from './Contexts';
-import { TwitchApi } from './api/Twitch';
-import { ClientId } from './ClientId';
-import { Client as TMIClient, Userstate } from "tmi.js"
 import './Chat.css';
-import { FFZ } from './api/FFZ';
-import { BTTV } from './api/BTTV';
-import { SevenTV } from './api/7TV';
+
+import { BadgesContext, ColorContext, ConfigContext, EmotesContext, PronounsContext } from './Contexts';
+import { ChatMessage, Cheer, Configuration, EmoteEventUpdate } from "./Types"
+import { ChatUserstate, Client as TMIClient } from "tmi.js"
+import React, { Component } from 'react';
+
+import BTTV from './api/BTTV';
+import { ClientId } from './ClientId';
+import { ColorAdjuster } from './Color';
+import ErrorIcon from './ErrorIcon';
+import FFZ from './api/FFZ';
+import { Message } from "./Message"
+import SevenTV from './api/7TV';
+import TwitchApi from './api/Twitch';
+import { fetchJSON } from "./Utils"
 
 interface ChatState {
   connected: boolean;
@@ -89,16 +92,21 @@ export class Chat extends Component<Configuration, ChatState> {
       return;
     }
 
+    let channelId: string, channelName: string, twitchApi: TwitchApi;
     try {
-      let twitchApi = new TwitchApi(ClientId, this.props.accessToken);
+      twitchApi = new TwitchApi(ClientId, this.props.accessToken);
+
       let users = await twitchApi.getUsers();
       if (!users || !users.length) {
         this.setState({ errorMessage: "Specified channel doesn't exist!" });
         return;
       }
 
-      this.setState({ channelId: users[0].id, channelName: users[0].login, twitchApi: twitchApi });
-      this.connect();
+      channelId = users[0].id;
+      channelName = users[0].login;
+
+      this.setState({ channelId, channelName, twitchApi });
+      this.connect(channelName);
     } catch (error) {
       // BUGBUG this is terrible
       localStorage.removeItem("access_token");
@@ -106,8 +114,8 @@ export class Chat extends Component<Configuration, ChatState> {
       return;
     }
 
-    let encodedId = encodeURIComponent(this.state.channelId!);
-    await Promise.all([this.loadBadges(encodedId), this.loadEmotes(encodedId), this.loadCheers(encodedId), this.loadPronouns()]);
+    let encodedId = encodeURIComponent(channelId!);
+    await Promise.all([this.loadBadges(encodedId, twitchApi), this.loadEmotes(encodedId), this.loadCheers(encodedId), this.loadPronouns()]);
   }
 
   private cleanup() {
@@ -136,11 +144,11 @@ export class Chat extends Component<Configuration, ChatState> {
     }
   }
 
-  private connect() {
+  private connect(channelName: string) {
     let client = new TMIClient({
       options: { debug: true, clientId: ClientId, skipUpdatingEmotesets: true },
-      identity: { username: this.state.channelName!, password: this.props.accessToken },
-      channels: [this.state.channelName!]
+      identity: { username: channelName!, password: this.props.accessToken },
+      channels: [channelName!]
     });
 
     client.addListener("message", this.onMessage.bind(this));
@@ -152,7 +160,7 @@ export class Chat extends Component<Configuration, ChatState> {
     this.setState({ tmiClient: client });
   }
 
-  onMessage(channel: string, userstate: Userstate, message: string, self: boolean) {
+  onMessage(channel: string, userstate: ChatUserstate, message: string, self: boolean) {
     console.log(userstate);
     let chatMessage: ChatMessage = {
       id: userstate.id!,
@@ -169,12 +177,10 @@ export class Chat extends Component<Configuration, ChatState> {
       this.setState(oldState => ({ messages: [...(oldState.messages.length >= 50 ? oldState.messages.slice(1, 50) : oldState.messages), chatMessage] }));
   }
 
-  private async loadBadges(encodedId: string) {
-    if (!!!this.state.twitchApi) return;
-
+  private async loadBadges(encodedId: string, twitchApi: TwitchApi) {
     let badgeSets = await Promise.all([ // TODO: FFZ custom badges
-      this.state.twitchApi.getGlobalBadges(),
-      this.state.twitchApi.getUserBadges(encodedId)
+      twitchApi.getGlobalBadges(),
+      twitchApi.getUserBadges(encodedId)
     ]);
 
     let badges = new Map<string, string[][]>();
@@ -209,6 +215,7 @@ export class Chat extends Component<Configuration, ChatState> {
   }
 
   private async loadEmotes(encodedId: string) {
+    console.log("Loading emotes", encodedId);
     let emotes = new Map<string, string[]>();
 
     let ffzEmotes = await FFZ.fetchGlobalEmotes();
@@ -233,10 +240,14 @@ export class Chat extends Component<Configuration, ChatState> {
     let sevenTVEmotes = await SevenTV.fetchGlobalEmotes();
     sevenTVEmotes.push(...await SevenTV.fetchChannelEmotes(encodedId));
     for (const emote of sevenTVEmotes) {
-      emotes.set(emote.name, emote.urls.map(e => e[1]));
+      let baseUrl = emote.data.host.url;
+      let files = emote.data.host.files.filter(f => f.format === 'WEBP');
+      if (!files.length) continue;
+
+      emotes.set(emote.name, files.map(e => `${baseUrl}/${e.name}`));
     }
 
-    this.sevenTVSubscribe();
+    // this.sevenTVSubscribe();
 
     console.log("Loaded emotes", emotes);
     this.setState({ emotes });
@@ -289,13 +300,16 @@ export class Chat extends Component<Configuration, ChatState> {
 
   private async fetchPronouns(userName: string) {
     if (this.state.pronounUsers.has(userName)) return;
-    this.state.pronounUsers.set(userName, { pending: true, pronoun: "" });
+    const map = new Map(this.state.pronounUsers);
+    map.set(userName, { pending: true, pronoun: "" });
+    this.setState({ pronounUsers: map });
 
     let json = await fetchJSON(`https://pronouns.alejo.io/api/users/${userName}`);
     if (!Array.isArray(json)) return;
 
-    this.state.pronounUsers.set(userName, { pending: false, pronoun: json[0]?.pronoun_id });
-    this.setState({ pronounUsers: this.state.pronounUsers });
+    const map2 = new Map(this.state.pronounUsers);
+    map2.set(userName, { pending: false, pronoun: json[0]?.pronoun_id });
+    this.setState({ pronounUsers: map2 });
   }
 
   render() {
@@ -325,9 +339,7 @@ export class Chat extends Component<Configuration, ChatState> {
       return (
         <div className="chat-container" style={style}>
           <div className="chat-error">
-            <svg height="128px" viewBox="0 0 960 960" width="128px" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink">
-              <path d="M0,480C0,435.667 5.66667,393.083 17,352.25C28.3333,311.417 44.4167,273.167 65.25,237.5C86.0833,201.833 111.083,169.417 140.25,140.25C169.417,111.083 201.833,86.0834 237.5,65.25C273.167,44.4167 311.417,28.3334 352.25,17C393.083,5.66669 435.667,0 480,0C524,0 566.417,5.75 607.25,17.25C648.083,28.75 686.333,44.9167 722,65.75C757.667,86.5834 790.083,111.583 819.25,140.75C848.417,169.917 873.417,202.333 894.25,238C915.083,273.667 931.25,311.917 942.75,352.75C954.25,393.583 960,436 960,480C960,524.333 954.333,566.917 943,607.75C931.667,648.583 915.583,686.833 894.75,722.5C873.917,758.167 848.917,790.583 819.75,819.75C790.583,848.917 758.167,873.917 722.5,894.75C686.833,915.583 648.583,931.667 607.75,943C566.917,954.333 524.333,960 480,960C435.667,960 393,954.333 352,943C311,931.667 272.75,915.583 237.25,894.75C201.75,873.917 169.417,848.917 140.25,819.75C111.083,790.583 86.0833,758.25 65.25,722.75C44.4167,687.25 28.3333,649 17,608C5.66667,567 0,524.333 0,480ZM896,480C896,441.667 891.083,404.75 881.25,369.25C871.417,333.75 857.417,300.583 839.25,269.75C821.083,238.917 799.417,210.917 774.25,185.75C749.083,160.583 721.083,138.917 690.25,120.75C659.417,102.583 626.25,88.5834 590.75,78.75C555.25,68.9167 518.333,64.0001 480,64C441.667,64.0001 404.75,68.9167 369.25,78.75C333.75,88.5834 300.583,102.5 269.75,120.5C238.917,138.5 210.833,160.167 185.5,185.5C160.167,210.833 138.5,238.917 120.5,269.75C102.5,300.583 88.5833,333.75 78.75,369.25C68.9167,404.75 64,441.667 64,480C64,518.333 68.9167,555.25 78.75,590.75C88.5833,626.25 102.5,659.417 120.5,690.25C138.5,721.083 160.167,749.167 185.5,774.5C210.833,799.833 238.917,821.5 269.75,839.5C300.583,857.5 333.75,871.417 369.25,881.25C404.75,891.083 441.667,896 480,896C518.333,896 555.25,891.083 590.75,881.25C626.25,871.417 659.417,857.417 690.25,839.25C721.083,821.083 749.083,799.417 774.25,774.25C799.417,749.083 821.083,721.083 839.25,690.25C857.417,659.417 871.417,626.25 881.25,590.75C891.083,555.25 896,518.333 896,480ZM448,544L448,288C448,279.333 451.167,271.833 457.5,265.5C463.833,259.167 471.333,256 480,256C488.667,256 496.167,259.167 502.5,265.5C508.833,271.833 512,279.333 512,288L512,544C512,552.667 508.833,560.167 502.5,566.5C496.167,572.833 488.667,576 480,576C471.333,576 463.833,572.833 457.5,566.5C451.167,560.167 448,552.667 448,544ZM432,672C432,658.667 436.667,647.333 446,638C455.333,628.667 466.667,624 480,624C493.333,624 504.667,628.667 514,638C523.333,647.333 528,658.667 528,672C528,685.333 523.333,696.667 514,706C504.667,715.333 493.333,720 480,720C466.667,720 455.333,715.333 446,706C436.667,696.667 432,685.333 432,672Z" />
-            </svg>
+            <ErrorIcon />
             <p>{this.state.errorMessage}</p>
           </div>
         </div>

@@ -1,8 +1,8 @@
-import { User, BadgeSet } from "./TwitchModels";
+import { BadgeSet, User } from "./TwitchModels";
 
 const HelixBaseUri = "https://api.twitch.tv/helix";
 
-export class TwitchApi {
+export default class TwitchApi {
     private clientId: string;
     private accessToken: string;
 

@@ -1,6 +1,7 @@
-import React, { useContext } from 'react';
 import { ConfigContext, EmotesContext } from "./Contexts";
 import { Emote, TwitchEmote } from './Types';
+import React, { useContext } from 'react';
+
 import { createEmoteSrcSet } from './Utils';
 
 interface ContentProps {
@@ -48,7 +49,7 @@ export const Content = (props: ContentProps) => {
 
     let name = text.slice(idx + 1, nextIdx);
     let emote = channelEmotes.get(name);
-    if (emote) {      
+    if (emote) {
       emotes.push({
         id: name,
         urls: emote,
@@ -72,7 +73,7 @@ export const Content = (props: ContentProps) => {
     index = emote.end;
   }
 
-  content.push(text.substr(index, text.length - index));  
+  content.push(text.substr(index, text.length - index));
 
   let config = useContext(ConfigContext);
   let emoteScale = Math.max(1, Math.min(4, Math.round(config!.fontSize / 15)))

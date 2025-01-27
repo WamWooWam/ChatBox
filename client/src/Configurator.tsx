@@ -8,7 +8,7 @@ import React, { ChangeEvent, Component } from 'react';
 import { Chat } from './Chat';
 import { Configuration } from './Types';
 import { DefaultConfig } from './Constants';
-import { TwitchApi } from './api/Twitch';
+import TwitchApi from './api/Twitch';
 
 type FontData = {
   family: string,
@@ -58,7 +58,7 @@ export class Configurator extends Component<{}, ConfiguratorState> {
       this.setState({ connecting: false });
     }
 
-    if ('queryLocalFonts' in window) {
+    if (typeof window.queryLocalFonts === "function") {
       window.queryLocalFonts().then((fonts: FontData[]) => {
         this.setState({ fonts: fonts.filter((f, i, a) => a.findIndex(o => o.family == f.family) === i) });
       });

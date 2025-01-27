@@ -1,12 +1,12 @@
-
-import React from "react";
-import { Chat } from "./Chat";
-import { Configurator } from "./Configurator";
-import { Configuration } from "./Types";
-import { decode } from "@msgpack/msgpack"
-import { DefaultConfig } from "./Constants";
-import { ApiError } from "./ApiError";
 import "./colors.css"
+
+import { ApiError } from "./ApiError";
+import { Chat } from "./Chat";
+import { Configuration } from "./Types";
+import { Configurator } from "./Configurator";
+import { DefaultConfig } from "./Constants";
+import React from "react";
+import { decode } from "@msgpack/msgpack"
 
 export const App = () => {
   let config: Configuration = DefaultConfig;

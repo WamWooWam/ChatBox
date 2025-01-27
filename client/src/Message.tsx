@@ -1,10 +1,11 @@
+import { ChatMessage, Configuration } from './Types';
+import { ColorContext, ConfigContext } from "./Contexts";
 import React, { Component } from 'react';
-import { TwitchDefaultColors } from './Constants';
+
 import { Badges } from "./Badges"
 import { Content } from "./Content"
 import { Pronouns } from './Pronouns';
-import { ColorContext, ConfigContext } from "./Contexts";
-import { ChatMessage, Configuration } from './Types';
+import { TwitchDefaultColors } from './Constants';
 
 interface MessageProps {
   message: ChatMessage;
@@ -46,7 +47,8 @@ export class Message extends Component<MessageProps, MessageState> {
           <ColorContext.Consumer>
             {(adjuster => {
               let message = this.props.message;
-              let rawNick = message.authorName.toLowerCase();
+              let authorName = message.authorName ?? "nobody";
+              let rawNick = authorName.toLowerCase();
 
               if (config?.blockedUsers.includes(rawNick!.toLowerCase())) { return null; }
               if (config?.hideCommands && message.content.startsWith('!')) { return null; }

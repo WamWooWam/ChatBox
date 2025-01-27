@@ -11,7 +11,7 @@ export interface BTTVEmote {
     code: string,
 }
 
-export class BTTV {
+export default class BTTV {
     static async fetchGlobalEmotes(): Promise<BTTVEmote[]> {
         return await fetchJSON(`https://api.betterttv.net/3/cached/emotes/global`)
     }
