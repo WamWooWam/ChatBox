@@ -97,31 +97,22 @@ a {
     backdrop-filter: blur(64px) saturate(125%);
 }
 
-
 .config-input-text {
     display: flex;
     flex: 1;
-
     margin-top: 8px;
-
     padding-bottom: 5px;
     padding-left: 12px;
     padding-right: 12px;
     padding-top: 5px;
-
     border: none;
     border-bottom: 2px solid var(--subtle-fill-color-secondary-brush);
     border-radius: 4px;
     font-size: 14px;
-
     transition: background ease-out 0.1s, border ease-out 0.1s, border-color 0.1s ease-out;
-
     color: var(--system-base-high-color);
     background-color: var(--control-fill-color-default-brush);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-        sans-serif;
-
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
     box-shadow: 0 1.2px 2.4px 0 rgba(0, 0, 0, 0.132), 0 0.6px 1.2px 0 rgba(0, 0, 0, 0.108);
     font-family: inherit;
 }
@@ -248,14 +239,18 @@ select.config-input-text {
     color: transparent;
 }
 
+
 /* checked */
+
 .checkbox input:checked~.checkmark {
     border: 1px solid var(--accent-fill-color-default-brush);
     background-color: var(--accent-fill-color-default-brush);
     color: var(--text-on-accent-fill-color-primary-brush)
 }
 
+
 /* unchecked pointer over */
+
 .checkbox:hover input~.checkmark {
     border: 1px solid var(--control-strong-stroke-color-default-brush);
     background-color: var(--control-alt-fill-color-tertiary-brush);
@@ -263,30 +258,33 @@ select.config-input-text {
 
 
 /* unchecked pointer pressed */
+
 .checkbox input:active~.checkmark {
     border: 1px solid var(--control-strong-stroke-color-disabled-brush);
     background-color: var(--control-alt-fill-color-quarternary-brush);
     color: transparent;
 }
 
+
 /* checked pointer over */
+
 .checkbox:hover input:checked~.checkmark {
     border: 1px solid var(--accent-fill-color-secondary-brush);
     background-color: var(--accent-fill-color-secondary-brush);
 }
 
+
 /* checked pointer pressed */
+
 .checkbox input:active:checked~.checkmark {
     border: 1px solid var(--accent-fill-color-tertiary-brush);
     background-color: var(--accent-fill-color-tertiary-brush);
     color: rgba(255, 255, 255, 1);
 }
 
-
 .checkmark::after {
     content: "\E73E";
 }
-
 
 input[type="range"] {
     margin-top: 8px;
@@ -307,7 +305,6 @@ input[type=range]::-webkit-slider-runnable-track {
     .config-pane {
         overflow-y: hidden;
     }
-
     .config-example {
         display: none;
     }
@@ -332,7 +329,6 @@ input[type=range]::-webkit-slider-runnable-track {
     color: var(--accent-fill-color-default-brush);
     cursor: pointer;
 }
-
 
 .btn {
     background: var(--system-base-low-color);

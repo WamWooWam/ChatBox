@@ -302,7 +302,7 @@ export class Chat extends Component<Configuration, ChatState> {
     let style = {
       color: this.props.fontColor ?? "white",
       fill: this.props.fontColor ?? "white",
-      fontFamily: this.props.fontName,
+      fontFamily: `"${this.props.fontName}"`,
       fontSize: this.props.fontSize + "pt",
       fontWeight: this.props.fontWeight,
       filter: "",
