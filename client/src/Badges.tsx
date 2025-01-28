@@ -26,6 +26,7 @@ export const Badges = memo((props: BadgesProps) => {
     let badgeVersionNum = parseInt(badgeSplit[1]);
     let badgeVersion = badgeData[Math.max(0, Math.min(badgeVersionNum, badgeData.length - 1))];
     
+    if(badgeVersion === undefined) continue;
     badgeElements.push(<img className={"badge badge-scale-" + emoteScale} alt={""} key={badge} src={badgeVersion[0]} srcSet={createBadgeSrcSet(badgeVersion)} />)
   }
 

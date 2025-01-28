@@ -103,7 +103,7 @@ module.exports = function (proxy, allowedHost) {
     // `proxy` is run between `before` and `after` `webpack-dev-server` hooks
     proxy: [
       {
-        context: ['/api'],
+        context: ['/chatbox/api'],
         target: 'http://localhost:3005',
         secure: false,
       },

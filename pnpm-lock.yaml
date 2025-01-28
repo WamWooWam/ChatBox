@@ -140,6 +140,12 @@ importers:
       preact:
         specifier: ^10.25.4
         version: 10.25.4
+      preact-iso:
+        specifier: ^2.8.1
+        version: 2.8.1(preact-render-to-string@6.5.13(preact@10.25.4))(preact@10.25.4)
+      preact-router:
+        specifier: ^4.1.2
+        version: 4.1.2(preact@10.25.4)
       prompts:
         specifier: 2.4.0
         version: 2.4.0
@@ -4592,6 +4598,22 @@ packages:
   postcss@8.5.1:
     resolution: {integrity: sha512-6oz2beyjc5VMn/KV1pPw8fliQkhBXrVn1Z3TVyqZxU8kZpzEKhBdmCFqI6ZbmGtamQvQGuU1sgPTk8ZrXDD7jQ==}
     engines: {node: ^10 || ^12 || >=14}
+
+  preact-iso@2.8.1:
+    resolution: {integrity: sha512-RL0yDdJcSiB4Wnk4fBqq0OE9QCfTEW7B2ULf8GHPx72AtFE+j1NvabjBF6y3rBgrNWSuuPuuiN4L4KxYteQD2Q==}
+    peerDependencies:
+      preact: '>=10'
+      preact-render-to-string: '>=6.4.0'
+
+  preact-render-to-string@6.5.13:
+    resolution: {integrity: sha512-iGPd+hKPMFKsfpR2vL4kJ6ZPcFIoWZEcBf0Dpm3zOpdVvj77aY8RlLiQji5OMrngEyaxGogeakTb54uS2FvA6w==}
+    peerDependencies:
+      preact: '>=10'
+
+  preact-router@4.1.2:
+    resolution: {integrity: sha512-uICUaUFYh+XQ+6vZtQn1q+X6rSqwq+zorWOCLWPF5FAsQh3EJ+RsDQ9Ee+fjk545YWQHfUxhrBAaemfxEnMOUg==}
+    peerDependencies:
+      preact: '>=10'
 
   preact@10.25.4:
     resolution: {integrity: sha512-jLdZDb+Q+odkHJ+MpW/9U5cODzqnB+fy2EiHSZES7ldV5LK7yjlVzTp7R8Xy6W6y75kfK8iWYtFVH7lvjwrCMA==}
@@ -11980,6 +12002,19 @@ snapshots:
       nanoid: 3.3.8
       picocolors: 1.1.1
       source-map-js: 1.2.1
+
+  preact-iso@2.8.1(preact-render-to-string@6.5.13(preact@10.25.4))(preact@10.25.4):
+    dependencies:
+      preact: 10.25.4
+      preact-render-to-string: 6.5.13(preact@10.25.4)
+
+  preact-render-to-string@6.5.13(preact@10.25.4):
+    dependencies:
+      preact: 10.25.4
+
+  preact-router@4.1.2(preact@10.25.4):
+    dependencies:
+      preact: 10.25.4
 
   preact@10.25.4: {}
 

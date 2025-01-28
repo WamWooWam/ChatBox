@@ -1,14 +1,11 @@
 import "./config.css"
 
-import * as MsgPack from "@msgpack/msgpack"
-
-import { ClientId, Scopes } from './ClientId';
-import React, { ChangeEvent, Component } from 'react';
+import React, { ChangeEvent, Component, FormEvent } from 'react';
 
 import { Chat } from './Chat';
 import { Configuration } from './Types';
 import { DefaultConfig } from './Constants';
-import TwitchApi from './api/Twitch';
+import { encode } from "@msgpack/msgpack"
 
 type FontData = {
   family: string,
@@ -41,7 +38,7 @@ const Checkbox = (props: { label: string, value: boolean, onChange: (event: Chan
 
 export class Configurator extends Component<{}, ConfiguratorState> {
 
-  constructor(props) {
+  constructor(props: {}) {
     super(props);
     this.state = { config: DefaultConfig, chatConfig: DefaultConfig, window: null, fonts: [] };
   }
@@ -63,10 +60,10 @@ export class Configurator extends Component<{}, ConfiguratorState> {
   }
 
   updateChat() {
-    this.setState({ chatConfig: this.state.config });
+    this.setState((state) => ({ chatConfig: { ...state.config } }));
   }
 
-  onValueChange<T>(name: string, newValue: T) {
+  onValueChange<T>(name: keyof Configuration, newValue: T) {
     this.setState((state) => ({ config: { ...state.config, [name]: newValue }, chatConfig: { ...state.config, [name]: newValue } }));
   }
 
@@ -74,11 +71,7 @@ export class Configurator extends Component<{}, ConfiguratorState> {
 
   }
 
-  onSubmit(e) {
-    e.preventDefault();
-  }
-
-  render() {
+  getUrl() {
     let configDiff = {};
     for (const key in this.state.config) {
       const element = this.state.config[key];
@@ -90,8 +83,15 @@ export class Configurator extends Component<{}, ConfiguratorState> {
 
     delete configDiff["accessToken"];
 
-    let configString = btoa(String.fromCharCode(...MsgPack.encode(configDiff)));
+    let configString = btoa(String.fromCharCode(...encode(configDiff)));
+    return window.location.protocol + "//" + window.location.host + "/chatbox/" + configString;
+  }
 
+  onSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+  }
+
+  render() {
     return (
       <>
         <div className="config-background" />
@@ -99,11 +99,11 @@ export class Configurator extends Component<{}, ConfiguratorState> {
           <div className="config-pane">
             <div className="config-main">
               <form onSubmit={this.onSubmit.bind(this)} className="config-input">
-                <h1>Wam's Chat Thing</h1>
-                <h4>A simple, easy to use chat box that supports <a href="https://betterttv.net/">BetterTTV</a>, <a href="https://frankerfacez.com/">FrankerFaceZ</a> and <a href="https://7tv.app/">7tv</a> emotes!</h4>
+                <h1>Wam's Chatbox</h1>
+                <h4>A simple, easy to use chatbox that supports <a href="https://betterttv.net/">BetterTTV</a>, <a href="https://frankerfacez.com/">FrankerFaceZ</a> and <a href="https://7tv.app/">7tv</a> emotes!</h4>
 
                 <div className="config-warning">
-                  <p>This chat box is not yet finished so links may break in future! Please don't use it in your layouts yet.</p>
+                  <p>This chatbox is not yet finished so links may break in future! Please don't use it in your layouts yet.</p>
                 </div>
 
                 {this.renderConfigSection()}
@@ -112,7 +112,7 @@ export class Configurator extends Component<{}, ConfiguratorState> {
 
               <div className="config-footer">
                 <p>Paste this into a browser source!</p>
-                <input className="config-input-text" readOnly={true} value={`${window.location.href}#${configString}`} />
+                <input className="config-input-text" readOnly={true} value={this.getUrl()} />
               </div>
             </div>
           </div>
@@ -135,7 +135,7 @@ export class Configurator extends Component<{}, ConfiguratorState> {
           className="config-input-text"
           placeholder="wamwoowam"
           value={this.state.config.channelName}
-          onChange={(e) => this.onValueChange("channelName", e.target.value)}
+          onChange={(e) => this.setState((state) => ({ config: { ...state.config, channelName: e.target.value } }))}
           onBlur={this.updateChat.bind(this)} />
       </div>
 

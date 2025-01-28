@@ -1,41 +1,35 @@
 import "./colors.css"
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
+import { Route, Router, lazy, useLocation } from 'preact-iso';
 
-import { ApiError } from "./ApiError";
-import { Chat } from "./Chat";
-import { ClientId } from "./ClientId";
-import { Configuration } from "./Types";
-import { Configurator } from "./Configurator";
-import { DefaultConfig } from "./Constants";
-import TwitchApi from "./api/Twitch";
-import { decode } from "@msgpack/msgpack"
+const Configurator = lazy(() => import("./Configurator").then((module) => (module.Configurator)));
+const ChatContainer = lazy(() => import("./ChatContainer").then((module) => (module.ChatContainer)));
 
-export const App = () => {
-  const [config, setConfig] = useState(null as Configuration | null);
+const NotFound = () => {
+  const route = useLocation();
   useEffect(() => {
-    try {
-      let newConfig = decode(Buffer.from(window.location.hash.substring(1), 'base64')) as Partial<Configuration>;
-      let baseConfig = { ...DefaultConfig };
-      console.log(baseConfig, newConfig);
-
-      if (newConfig.accessToken && !newConfig.channelName) {
-        var twitchApi = new TwitchApi(ClientId, newConfig.accessToken);
-        twitchApi.getUsers().then(users => {
-          newConfig.channelName = users[0].login;
-          setConfig(Object.assign(baseConfig, newConfig));
-        });
-      }
-      else {
-        setConfig(Object.assign(baseConfig, newConfig));
-      }
+    console.log(window.location.hash);
+    if (window.location.hash !== "") {
+      route.route("/chatbox/" + window.location.hash.substring(1));
     }
-    catch (e) { }
+    else {
+      route.route("/chatbox/config");
+    }
   }, []);
 
+  return <div>Loading...</div>;
+}
+
+export const App = () => {
   return (
-    <>
-      {config?.channelName ? <Chat {...config} /> : <Configurator />}
-    </>
+    <Router
+      onRouteChange={(url) => console.log('Route changed to', url)}
+      onLoadStart={(url) => console.log('Starting to load', url)}
+      onLoadEnd={(url) => console.log('Finished loading', url)}>
+      <Route path="/chatbox/config" component={Configurator} />
+      <Route path="/chatbox/:config" component={ChatContainer} />
+      <Route path="/chatbox" component={NotFound} />
+    </Router>
   );
 };

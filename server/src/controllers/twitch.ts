@@ -177,8 +177,8 @@ async function fetchFFZEmotes(encodedId: string) {
     console.log("Loading emotes", encodedId);
     let emotes = new Map<string, string[]>();
 
-    let ffzEmotes = await FFZ.fetchGlobalEmotes();
-    ffzEmotes.push(...await FFZ.fetchChannelEmotes(encodedId));
+    let ffzEmotes = await FFZ.fetchGlobalEmotes() ?? [];
+    ffzEmotes.push(...(await FFZ.fetchChannelEmotes(encodedId) ?? []));
     for (const emote of ffzEmotes) {
         emotes.set(emote.code, [emote.images['1x'], emote.images['2x'], emote.images['4x']]);
     }
@@ -188,8 +188,8 @@ async function fetchFFZEmotes(encodedId: string) {
 async function fetchBttvEmotes(encodedId: string) {
     let bttvUser = await BTTV.fetchUser(encodedId);
     let bttvEmotes = await BTTV.fetchGlobalEmotes();
-    bttvEmotes.push(...bttvUser.channelEmotes);
-    bttvEmotes.push(...bttvUser.sharedEmotes);
+    bttvEmotes.push(...(bttvUser?.channelEmotes ?? []));
+    bttvEmotes.push(...(bttvUser?.sharedEmotes ?? []));
 
     let emotes = new Map<string, string[]>();
     for (const emote of bttvEmotes) {

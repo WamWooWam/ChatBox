@@ -1,6 +1,7 @@
 import './index.css';
 
 import { App } from './App';
+import { LocationProvider } from 'preact-iso';
 import React from 'react';
 import ReactDOM from 'react-dom';
 
@@ -13,6 +14,8 @@ if (window.location.pathname.startsWith("/chatbox/auth")) {
 }
 
 ReactDOM.render(
-  <App />,
+  <LocationProvider scope="/chatbox">
+    <App />
+  </LocationProvider>,
   document.getElementById('root')
 );
