@@ -1,6 +1,8 @@
 import "dotenv/config.js";
 
 import express from 'express'
+import { fileURLToPath } from "url";
+import path from "path"
 import registerTwitch from './controllers/twitch.js';
 
 const app = express();
@@ -14,12 +16,16 @@ baseRouter.use('/api', apiRouter);
 
 registerTwitch(apiRouter);
 
-// serve static files
-baseRouter.use(express.static('public'));
+const index = fileURLToPath(import.meta.resolve('@chatbox/client/build/index.html'));
+const pubdir = path.dirname(index);
 
-// SPA, serve index.html for all routes
+console.log(index, pubdir);
+
+// serve static files
+baseRouter.use(express.static(pubdir));
+
 baseRouter.get(/(.*)/, (req, res) => {
-    res.sendFile('public/index.html', { root: '.' });
+    res.sendFile("index.html", { root: pubdir });
 });
 
 app.listen(port, () => {

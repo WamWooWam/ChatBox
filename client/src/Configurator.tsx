@@ -135,7 +135,7 @@ export class Configurator extends Component<{}, ConfiguratorState> {
           className="config-input-text"
           placeholder="wamwoowam"
           value={this.state.config.channelName}
-          onChange={(e) => this.setState((state) => ({ config: { ...state.config, channelName: e.target.value } }))}
+          onChange={(e) => this.setState((state) => ({ config: { ...state.config, channelName: (e.target as HTMLInputElement).value } }))}
           onBlur={this.updateChat.bind(this)} />
       </div>
 
@@ -148,7 +148,7 @@ export class Configurator extends Component<{}, ConfiguratorState> {
           <select className="config-input-text"
             style={{ flex: 3 }}
             value={this.state.config.fontName}
-            onChange={(e) => this.onValueChange("fontName", e.target.value)}>
+            onChange={(e) => this.onValueChange("fontName", (e.target as HTMLInputElement).value)}>
             {this.state.fonts.map((font) => <option value={font.family}>{font.family}</option>)}
           </select>
           : <input type="text"
@@ -157,7 +157,7 @@ export class Configurator extends Component<{}, ConfiguratorState> {
             size={1}
             style={{ flex: 3 }}
             value={this.state.config.fontName}
-            onChange={(e) => this.onValueChange("fontName", e.target.value)} />
+            onChange={(e) => this.onValueChange("fontName", (e.target as HTMLInputElement).value)} />
         }
 
         {this.state.showFontsButton && this.state.fonts.length === 0 ? <button className="btn" onClick={() => this.loadFonts()}>Load Fonts</button> : null}
@@ -167,11 +167,11 @@ export class Configurator extends Component<{}, ConfiguratorState> {
           placeholder="Font Size"
           size={1}
           value={this.state.config.fontSize}
-          onChange={(e) => this.onValueChange("fontSize", isNaN(+e.target.value) ? this.state.config.fontSize : +e.target.value)} />
+          onChange={(e) => this.onValueChange("fontSize", isNaN(+(e.target as HTMLInputElement).value) ? this.state.config.fontSize : +(e.target as HTMLInputElement).value)} />
 
         <select title="font weight" className="config-input-text"
           value={this.state.config.fontWeight}
-          onChange={(e) => this.onValueChange("fontWeight", +e.target.value)}>
+          onChange={(e) => this.onValueChange("fontWeight", +(e.target as HTMLInputElement).value)}>
           <option value="100">Thin</option>
           <option value="200">Light</option>
           <option value="300">Semilight</option>
@@ -187,7 +187,7 @@ export class Configurator extends Component<{}, ConfiguratorState> {
           className="config-input-text"
           size={1}
           value={this.state.config.fontColor}
-          onChange={(e) => this.onValueChange("fontColor", e.target.value)} />
+          onChange={(e) => this.onValueChange("fontColor", (e.target as HTMLInputElement).value)} />
       </div>
 
       <label className="form-group-label">
@@ -196,23 +196,23 @@ export class Configurator extends Component<{}, ConfiguratorState> {
       <div className="form-group">
         <textarea title="blocked users" className="config-input-text"
           value={this.state.config.blockedUsers.join('\n')}
-          onChange={(e) => this.onValueChange("blockedUsers", e.target.value.split('\n'))} />
+          onChange={(e) => this.onValueChange("blockedUsers", (e.target as HTMLTextAreaElement).value.split('\n'))} />
       </div>
 
       <div className="form-group">
-        <Checkbox label="Show badges" value={this.state.config.showBadges} onChange={(e) => this.onValueChange("showBadges", e.target.checked)} />
-        <Checkbox label="Show pronouns" value={this.state.config.showPronouns} onChange={(e) => this.onValueChange("showPronouns", e.target.checked)} />
-        <Checkbox label="Show user colours" value={this.state.config.showUserColours} onChange={(e) => this.onValueChange("showUserColours", e.target.checked)} />
+        <Checkbox label="Show badges" value={this.state.config.showBadges} onChange={(e) => this.onValueChange("showBadges", (e.target as HTMLInputElement).checked)} />
+        <Checkbox label="Show pronouns" value={this.state.config.showPronouns} onChange={(e) => this.onValueChange("showPronouns", (e.target as HTMLInputElement).checked)} />
+        <Checkbox label="Show user colours" value={this.state.config.showUserColours} onChange={(e) => this.onValueChange("showUserColours", (e.target as HTMLInputElement).checked)} />
 
         {
           this.state.config.showUserColours ?
-            <Checkbox label="Readable colours" value={this.state.config.readableColours} onChange={(e) => this.onValueChange("readableColours", e.target.checked)} /> : null
+            <Checkbox label="Readable colours" value={this.state.config.readableColours} onChange={(e) => this.onValueChange("readableColours", (e.target as HTMLInputElement).checked)} /> : null
         }
 
-        <Checkbox label="Hide commands" value={this.state.config.hideCommands} onChange={(e) => this.onValueChange("hideCommands", e.target.checked)} />
-        <Checkbox label="Temporary messages" value={this.state.config.hideMessages} onChange={(e) => this.onValueChange("hideMessages", e.target.checked)} />
-        <Checkbox label="Drop shadow" value={this.state.config.dropShadow} onChange={(e) => this.onValueChange("dropShadow", e.target.checked)} />
-        <Checkbox label="Outline" value={this.state.config.outline} onChange={(e) => this.onValueChange("outline", e.target.checked)} />
+        <Checkbox label="Hide commands" value={this.state.config.hideCommands} onChange={(e) => this.onValueChange("hideCommands", (e.target as HTMLInputElement).checked)} />
+        <Checkbox label="Temporary messages" value={this.state.config.hideMessages} onChange={(e) => this.onValueChange("hideMessages", (e.target as HTMLInputElement).checked)} />
+        <Checkbox label="Drop shadow" value={this.state.config.dropShadow} onChange={(e) => this.onValueChange("dropShadow", (e.target as HTMLInputElement).checked)} />
+        <Checkbox label="Outline" value={this.state.config.outline} onChange={(e) => this.onValueChange("outline", (e.target as HTMLInputElement).checked)} />
       </div>
 
       {this.state.config.hideMessages ? (
@@ -227,7 +227,7 @@ export class Configurator extends Component<{}, ConfiguratorState> {
                 placeholder="Message Timeout"
                 size={1}
                 defaultValue={this.state.config.hideMessagesTimeout / 1000}
-                onBlur={(e) => this.onValueChange("hideMessagesTimeout", isNaN(+e.target.value) ? this.state.config.hideMessagesTimeout : +e.target.value * 1000)} />
+                onBlur={(e) => this.onValueChange("hideMessagesTimeout", isNaN(+(e.target as HTMLInputElement).value) ? this.state.config.hideMessagesTimeout : +(e.target as HTMLInputElement).value * 1000)} />
             </label>
           </div>
         </>
@@ -245,7 +245,7 @@ export class Configurator extends Component<{}, ConfiguratorState> {
                 max={10}
                 step={0.5}
                 value={this.state.config.readableContrast}
-                onChange={(e) => this.onValueChange("readableContrast", +e.target.value)} />
+                onChange={(e) => this.onValueChange("readableContrast", +(e.target as HTMLInputElement).value)} />
             </label>
 
             <label className="form-label">
@@ -254,7 +254,7 @@ export class Configurator extends Component<{}, ConfiguratorState> {
                 className="config-input-text"
                 size={1}
                 value={this.state.config.readableBackground}
-                onChange={(e) => this.onValueChange("readableBackground", e.target.value)} />
+                onChange={(e) => this.onValueChange("readableBackground", (e.target as HTMLInputElement).value)} />
             </label>
 
             <label className="form-label">
@@ -262,7 +262,7 @@ export class Configurator extends Component<{}, ConfiguratorState> {
 
               <select className="config-input-text"
                 value={this.state.config.readableMode}
-                onChange={(e) => this.onValueChange("readableMode", +e.target.value)}>
+                onChange={(e) => this.onValueChange("readableMode", +(e.target as HTMLInputElement).value)}>
                 <option value="1">HSL Luma (FFZ Default)</option>
                 <option value="2">Luv Luma</option>
                 <option value="3">HSL Loop (BTTV-like)</option>
@@ -285,7 +285,7 @@ export class Configurator extends Component<{}, ConfiguratorState> {
                 placeholder="Shadow Offset"
                 size={1}
                 value={this.state.config.dropShadowOffset}
-                onChange={(e) => this.onValueChange("dropShadowOffset", isNaN(+e.target.value) ? this.state.config.dropShadowOffset : +e.target.value)} />
+                onChange={(e) => this.onValueChange("dropShadowOffset", isNaN(+(e.target as HTMLInputElement).value) ? this.state.config.dropShadowOffset : +(e.target as HTMLInputElement).value)} />
             </label>
 
             <label className="form-label">
@@ -295,7 +295,7 @@ export class Configurator extends Component<{}, ConfiguratorState> {
                 placeholder="Shadow Blur Radius"
                 size={1}
                 value={this.state.config.dropShadowBlur}
-                onChange={(e) => this.onValueChange("dropShadowBlur", isNaN(+e.target.value) ? this.state.config.dropShadowBlur : +e.target.value)} />
+                onChange={(e) => this.onValueChange("dropShadowBlur", isNaN(+(e.target as HTMLInputElement).value) ? this.state.config.dropShadowBlur : +(e.target as HTMLInputElement).value)} />
             </label>
 
             <label className="form-label">
@@ -304,7 +304,7 @@ export class Configurator extends Component<{}, ConfiguratorState> {
                 className="config-input-text"
                 size={1}
                 value={this.state.config.dropShadowColour}
-                onChange={(e) => this.onValueChange("dropShadowColour", e.target.value)} />
+                onChange={(e) => this.onValueChange("dropShadowColour", (e.target as HTMLInputElement).value)} />
             </label>
           </div>
         </>
@@ -323,7 +323,7 @@ export class Configurator extends Component<{}, ConfiguratorState> {
                 placeholder="Outline Thickness"
                 size={1}
                 value={this.state.config.outlineThickness}
-                onChange={(e) => this.onValueChange("outlineThickness", isNaN(+e.target.value) ? this.state.config.outlineThickness : +e.target.value)} />
+                onChange={(e) => this.onValueChange("outlineThickness", isNaN(+(e.target as HTMLInputElement).value) ? this.state.config.outlineThickness : +(e.target as HTMLInputElement).value)} />
             </label>
 
             <label className="form-label">
@@ -332,7 +332,7 @@ export class Configurator extends Component<{}, ConfiguratorState> {
                 className="config-input-text"
                 size={1}
                 value={this.state.config.outlineColour}
-                onChange={(e) => this.onValueChange("outlineColour", e.target.value)} />
+                onChange={(e) => this.onValueChange("outlineColour", (e.target as HTMLInputElement).value)} />
             </label>
           </div>
         </>

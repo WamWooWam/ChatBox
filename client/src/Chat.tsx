@@ -82,7 +82,7 @@ export class Chat extends Component<Configuration, ChatState> {
     this.cleanup();
 
     if (!this.props.channelName) {
-      this.setState({ errorMessage: "No channel specifed!" });
+      this.setState({ errorMessage: "No channel specified!" });
       return;
     }
 

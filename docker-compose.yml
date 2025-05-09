@@ -1,0 +1,9 @@
+services:
+  chatbox:
+    build: .
+    ports:
+      - "3005:3000"
+    restart: always
+    environment:
+      - NODE_ENV=production
+    container_name: chatbox
